@@ -1,0 +1,37 @@
+specVersion: "2.6"
+metadata:
+  name: customer.app.variant.f1512
+type: application
+server:
+  customMiddleware:
+    - name: fiori-tools-proxy
+      afterMiddleware: compression
+      configuration:
+        ignoreCertError: false
+        backend:
+          - path: /sap
+            url: http://vhfcxds3ci.sap.bara.mx:44300
+            client: "110"
+            destination: CNX_DEV_DS3_44300
+          - path: /resources/sap/retail/store/lib/reuses1
+            destination: CNX_DEV_DS3_44300
+            url: http://vhfcxds3ci.sap.bara.mx:44300
+            client: "110"
+            pathPrefix: /sap/bc/ui5_ui5/sap/rtst_reuses1
+        ui5:
+          path:
+            - /resources
+            - /test-resources
+          url: https://ui5.sap.com
+          version: "1.120.44"
+    - name: fiori-tools-appreload
+      afterMiddleware: compression
+      configuration:
+        port: 35729
+        path: webapp
+        delay: 300
+    - name: fiori-tools-preview
+      afterMiddleware: fiori-tools-appreload
+      configuration:
+        component: customer.app.variant.f1512
+        ui5Theme: sap_fiori_3        

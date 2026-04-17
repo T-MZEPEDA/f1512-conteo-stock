@@ -1,0 +1,234 @@
+<!--
+
+    Copyright (C) 2009-2023 SAP SE or an SAP affiliate company. All rights reserved.
+
+-->
+<core:View
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:l="sap.ui.layout"
+    xmlns:ndc="sap.ndc"
+    controllerName="retail.store.countstocks1.controller.ActivityDetails"
+>
+    <Page
+        id="InventoryDetailsPage"
+        navButtonPress="onNavBack"
+        title="{i18n>INVENTORY_DETAILS_TITLE}"
+        class="sapUiResponsiveContentPadding"
+    >
+        <content>
+            <ObjectHeader
+                id="INVENTORY_ACTIVITY_DETAILS_OH"
+                title="{parts:[{path:'CAHeader>/CADesc'}, {path:'CAHeader>/CANum'}], formatter:'._formatter.formatCATitle'}"
+            >
+                <firstStatus>
+                    <ObjectStatus
+                        id="INVENTORY_ACTIVITY_DETAILS_OS"
+                        text="{parts:[{path:'CAHeader>/'}, {path:'CADetails>/ZoneNumber'},{path:'i18n>CA_TYPE_DESC_HO_RECOUNT'},{path:'i18n>CA_TYPE_DESC_IN_STORE_RECOUNT'}], formatter:'._formatter.formatCADetailTypeIndicator'}"
+                        state="None"
+                    />
+                </firstStatus>
+                <attributes>
+                    <ObjectAttribute
+                        id="CA_PLANNED_COUNT_DATE"
+                        text="{parts: [{path:'CAHeader>/CAPlannedCountDate'}], formatter:'._formatter.formatDate'}"
+                    />
+                    <ObjectAttribute
+                        id="CA_DESC"
+                        visible="{parts: [{path:'CAHeader>/CADesc'}], formatter:'._formatter.isVisibleCANumAttribute'}"
+                        text="{CAHeader>/CANum}"
+                    />
+                    <ObjectAttribute
+                        id="STORAGE_LOC_DESC"
+                        text="{CAHeader>/StorageLocationDesc}"
+                    />
+                    <!-- VMTC LABEL CUSTOM - Inicio -->
+                    <ObjectAttribute
+                        id="ITEMS_COUNTED_GENERAL"
+                        text="Contados (0)"
+                    />
+                    <ObjectAttribute
+                        id="ITEMS_NOT_COUNTED_LB"
+                        text="No contados (0)"
+                    />
+                    <!-- VMTC LABEL CUSTOM - Fin -->
+                    <!-- Extends count activity details header with new information -->
+                    <core:ExtensionPoint
+                        name="Count_Activity_Details_Header_Info_Ext"
+                    />
+                </attributes>
+            </ObjectHeader>
+            <Panel>
+                <!-- <HBox >				   
+				   <Label id="ITEMS_COUNTED_GENERAL" design="Bold" class="sapUiSmallMarginTop"
+						text="Contados ({CADetails>/TotalCountedItems})"/>
+					<Label id="ITEMS_NOT_COUNTED_LB" design="Bold" class="sapUiSmallMarginTop sapUiLargeMarginBegin"
+						text="No contados ({CADetails>/TotalCountedItems})"/>
+						</HBox> -->
+                <ComboBox>
+                    <core:Item
+                        key="1"
+                        text="Todas las posiciones"
+                    />
+                    <core:Item
+                        key="2"
+                        text="Contados"
+                    />
+                    <core:Item
+                        key="3"
+                        text="No contados"
+                    />
+                </ComboBox>
+            </Panel>
+            <Toolbar
+                id="ITEMS_COUNTED_TB"
+                width="100%"
+                design="Transparent"
+            >
+                <content>
+                    <ndc:BarcodeScannerButton
+                        id="sampleBarcodeScannerButton"
+                        scanSuccess=".onScanSuccess"
+                        scanFail="onScanError"
+                        inputLiveUpdate="onScanLiveupdate"
+                        dialogTitle="Barcode Scanner Button Sample"
+                        visible="true"
+                    />
+                    <Label
+                        id="ITEMS_COUNTED_LB"
+                        design="Bold"
+                        text="{parts:[{path:'CADetails>/TotalCountedItems'}],formatter:'._formatter.formatTotalItemsCountedLabel'}"
+                    />
+                    <!-- <Label id="ITEMS_COUNTED_GENERAL" design="Bold" class="sapUiLargeMarginBegin"
+						text="Contados ({CADetails>/TotalCountedItems})"/>
+					<Label id="ITEMS_NOT_COUNTED_LB" design="Bold" class="sapUiLargeMarginBegin"
+						text="No contados ({CADetails>/TotalCountedItems})"/> -->
+                </content>
+            </Toolbar>
+            <Table
+                id="CA_LINE_ITEMS_TABLE"
+                mode="{parts:[{path: 'CADetails>/CountByZone'}],formatter:'._formatter.formatCALineItemsTableDeletionMode'}"
+                items="{path:'CALineItems>/'}"
+                growing="true"
+                growingThreshold="100"
+            >
+                <columns>
+                    <Column id="PRODUCT_INFO_COL" />
+                    <Column
+                        id="QTY_COL"
+                        hAlign="End"
+                        width="8rem"
+                    />
+                </columns>
+                <items>
+                    <ColumnListItem
+                        id="PRODUCT_LINE_ITEMS"
+                        vAlign="Middle"
+                    >
+                        <cells>
+                            <VBox id="PRODUCT_INFO_COL_VL">
+                                <ObjectIdentifier
+                                    id="PRODUCT_INFO_COL_OI"
+                                    title="{CALineItems>ProductDesc}"
+                                    titlePress="onProductTitlePress"
+                                    titleActive="{parts:[{path:''}], formatter:'._formatter.isProductDescriptionLinkEnabled'}"
+                                    text="{parts:[{path:'i18n>PRODUCT_NUMBER_TITLE'}, {path:'CALineItems>ProductNumber'}], formatter:'._formatter.concatenateWrappingWordsWithColonSeparator'}"
+                                />
+                                <Text
+                                    id="PRODUCT_GTIN"
+                                    text="{parts:[{path:'i18n>EAN_UPC'}, {path:'CALineItems>GTIN'}], formatter:'._formatter.concatenateWrappingWordsWithColonSeparator'}"
+                                />
+                                <!-- Extends count activity details product with new information -->
+                                <core:ExtensionPoint
+                                    name="Count_Activity_Details_Product_Info_Ext"
+                                />
+                            </VBox>
+                            <!-- <VBox>                                 -->
+                            <VBox id="QTY_COL_VL">
+                                <Input
+                                    id="QTY_INPUT"
+                                    value="{CALineItems>CountQty}"
+                                    type="Number"
+                                    change="_onQuantityChange"
+                                    visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
+                                    enabled="{parts:[{path:'CAHeader>/InStoreStatus'}], formatter:'._formatter.isProductLineItemQtyInputEnabled'}"
+                                    width="3.5rem"
+                                />
+                                <Text
+                                    id="QTY_TXT"
+                                    text="{CALineItems>CountQty}"
+                                    visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountTextField'}"
+                                />
+                                <Text
+                                    id="BASE_UOM_TXT"
+                                    text="Total {CALineItems>CountUoM}"
+                                />
+
+                                <!-- INICIO -->
+                                <HBox justifyContent="SpaceAround">
+                                    <!-- Código Custom: Se agrega input box de PZA - Inicio -->
+                                    <VBox
+                                        id="PZA_COL_VL"
+                                        class="sapUiTinyMarginEnd"
+                                    >
+                                        <Input
+                                            id="PZA_INPUT"
+                                            value="0"
+                                            type="Number"
+                                            change="_onQuantityChange"
+                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
+                                            enabled="{parts:[{path:'CAHeader>/InStoreStatus'}], formatter:'._formatter.isProductLineItemQtyInputEnabled'}"
+                                            width="3.5rem"
+                                        />
+                                        <Text
+                                            id="PZA_TXT"
+                                            text="{CALineItems>CountQty}"
+                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountTextField'}"
+                                        />
+                                        <Text
+                                            id="PZA_UOM_TXT"
+                                            text="{CALineItems>CountUoM}"
+                                        />
+                                    </VBox>
+                                    <!-- Código Custom: Se agrega input box de PZA - Fin -->
+                                    <!-- Código Custom: Se agrega input box de Caja - Inicio -->
+                                    <VBox id="CAJA_COL_VL">
+                                        <Input
+                                            id="CAJA_INPUT"
+                                            value="{CALineItems>CountQty}"
+                                            type="Number"
+                                            change="_onQuantityChange"
+                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
+                                            enabled="{parts:[{path:'CAHeader>/InStoreStatus'}], formatter:'._formatter.isProductLineItemQtyInputEnabled'}"
+                                            width="3.5rem"
+                                        />
+                                        <Text
+                                            id="CAJA_TXT"
+                                            text="{CALineItems>CountQty}"
+                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountTextField'}"
+                                        />
+                                        <Text
+                                            id="CAJA_UOM_TXT"
+                                            text="CJ"
+                                        />
+                                    </VBox>
+                                </HBox>
+                                <!-- Código Custom: Se agrega input box de Caja - Fin -->
+                                <!-- FIN -->
+                            </VBox>
+
+                            <!-- </VBox> -->
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+        <footer>
+            <core:Fragment
+                id="ACTIVITY_DETAILS_FOOTER"
+                fragmentName="retail.store.countstocks1.view.fragments.CADetailFooter"
+                type="XML"
+            />
+        </footer>
+    </Page>
+</core:View>

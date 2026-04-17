@@ -1,0 +1,50 @@
+{
+  "type": "abaprep",
+  "BSPName": "RT_COUNT_STKS1",
+  "component": "RT_COUNT_STKS1%2fComponent.js",
+  "manifest": "RT_COUNT_STKS1%2fmanifest.json",
+  "versionJsonPath": "RT_COUNT_STKS1%2fversion.json",
+  "controllers": {
+    "ActivityDetails": "RT_COUNT_STKS1%2fcontroller%2fActivityDetails.controller.js",
+    "App": "RT_COUNT_STKS1%2fcontroller%2fApp.controller.js",
+    "CountingActivities": "RT_COUNT_STKS1%2fcontroller%2fCountingActivities.controller.js",
+    "ManagerActivityDetails": "RT_COUNT_STKS1%2fcontroller%2fManagerActivityDetails.controller.js",
+    "Master": "RT_COUNT_STKS1%2fcontroller%2fMaster.controller.js",
+    "ProductDetails": "RT_COUNT_STKS1%2fcontroller%2fProductDetails.controller.js"
+  },
+  "views": {
+    "ActivityDetails": "RT_COUNT_STKS1%2fview%2fActivityDetails.view.xml",
+    "App": "RT_COUNT_STKS1%2fview%2fApp.view.xml",
+    "CountingActivities": "RT_COUNT_STKS1%2fview%2fCountingActivities.view.xml",
+    "DetailNoObjectsAvailable": "RT_COUNT_STKS1%2fview%2fDetailNoObjectsAvailable.view.xml",
+    "DetailObjectNotFound": "RT_COUNT_STKS1%2fview%2fDetailObjectNotFound.view.xml",
+    "ManagerActivityDetails": "RT_COUNT_STKS1%2fview%2fManagerActivityDetails.view.xml",
+    "NotFound": "RT_COUNT_STKS1%2fview%2fNotFound.view.xml",
+    "ProductDetails": "RT_COUNT_STKS1%2fview%2fProductDetails.view.xml"
+  },
+  "fragments": {
+    "ViewSettingsDialog": "RT_COUNT_STKS1%2fview%2fViewSettingsDialog.fragment.xml",
+    "CADetailFooter": "RT_COUNT_STKS1%2fview%2ffragments%2fCADetailFooter.fragment.xml",
+    "CountingActivitiesListItem": "RT_COUNT_STKS1%2fview%2ffragments%2fCountingActivitiesListItem.fragment.xml",
+    "ManagerCADetailFooter": "RT_COUNT_STKS1%2fview%2ffragments%2fManagerCADetailFooter.fragment.xml",
+    "ManagerIconTabFilterContent": "RT_COUNT_STKS1%2fview%2ffragments%2fManagerIconTabFilterContent.fragment.xml",
+    "ManagerSubmitConfirmationDialog": "RT_COUNT_STKS1%2fview%2ffragments%2fManagerSubmitConfirmationDialog.fragment.xml",
+    "ProductSearchListItemTemplate": "RT_COUNT_STKS1%2fview%2ffragments%2fProductSearchListItemTemplate.fragment.xml",
+    "ProductSubmitConfirmationDialog": "RT_COUNT_STKS1%2fview%2ffragments%2fProductSubmitConfirmationDialog.fragment.xml",
+    "ZoneInputDialog": "RT_COUNT_STKS1%2fview%2ffragments%2fZoneInputDialog.fragment.xml"
+  },
+  "system": {
+    "name": "CNX_DEV_DS3_44300",
+    "proxyUrlPrefix": "/destinations/CNX_DEV_DS3_44300",
+    "path": "/sap/bc/adt",
+    "url": "/destinations/CNX_DEV_DS3_44300/sap/bc/adt",
+    "wattUsage": "odata_abap,dev_abap",
+    "entryPath": "/sap/bc/adt",
+    "additionalData": []
+  },
+  "minUI5Version": "1.114.2",
+  "namespace": "retail.store.countstocks1",
+  "parentResourceRootUrl": "/destinations/CNX_DEV_DS3_44300/sap/bc/ui5_ui5/sap/RT_COUNT_STKS1",
+  "resourceBundle": "i18n/i18n.properties",
+  "shouldLinkComponentToManifest": true
+}
