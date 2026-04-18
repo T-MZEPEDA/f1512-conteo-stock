@@ -154,6 +154,7 @@ sap.ui.define([
 				GTIN: o.GTIN,
 				CountQty: Number(o.CountQty)
 			};
+			this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
 			// ----------------------------------------------------------------
 		},
 		//    _openProductSearchSelectDialog: function () {								
@@ -455,7 +456,7 @@ sap.ui.define([
 				t.loadCADLineItems(b);
 			};
 			this._context.createCountingActivityDetailForZone(o, z, a, E);
-			this.addInitialData("o"); // --> VMTC: Se agrega para cargar datos iniciales a partir del OData CAProducts
+			this.addInitialData(); // --> VMTC: Se agrega para cargar datos iniciales a partir del OData CAProducts
 		},
 		//    createNewCADetailsByProductForHeader: function (o) {
 		//        var t = this;
@@ -557,13 +558,18 @@ sap.ui.define([
 			var s = l.getBindingContext("CALineItems").getPath();
 			var b = a.getObject(s);
 			//----------- Suma Custom ------------
+
+
 			if (E.getSource().sId.includes("PZA_INPUT")) {
 				var v_Aux = Number(b.CountQty) + Number(E.getSource()._lastValue);
-			} else {
+			}
+			if (E.getSource().sId.includes("CAJA_INPUT")) {
+				v_Aux = Number(b.CountQty);
+				this.getConversionCajas(b, E);
+			}
+			if (E.getSource().sId.includes("QTY_INPUT")) {
 				v_Aux = Number(b.CountQty);
 			}
-			var convCajas = this.getConversionCajas(b);
-			debugger;
 			// ----------------------------------- 
 			//    var v = b.CountQty; --> Original
 			var v = v_Aux.toString();
@@ -1013,46 +1019,23 @@ sap.ui.define([
 		//        }
 		//    }
 		// -------------------------------- Inicio de funciones Custom ---------------------------------
-		addInitialData: function (o) {
+		addInitialData: function () {
 			//    ------------- VMTC -> Código Custom--------------------------
 			var oDataProducts = this.oDataObject();
-			o = this.getView().getModel("CAHeader").getData();
+			var o = this.getView().getModel("CAHeader").getData();
 			var oThis = this;
-			var oFilterCANum = new sap.ui.model.Filter(
-				"CANum",
-				sap.ui.model.FilterOperator.EQ,
-				o.CANum
-			);
-			var oFilterCAType = new sap.ui.model.Filter(
-				"CAType",
-				sap.ui.model.FilterOperator.EQ,
-				o.CAType
-			);
-			var oFilterLocID = new sap.ui.model.Filter(
-				"StorageLocationID",
-				sap.ui.model.FilterOperator.EQ,
-				o.StorageLocationID
-			);
-			var oFilterRefP = new sap.ui.model.Filter(
-				"ReferencedPIDocs",
-				sap.ui.model.FilterOperator.EQ,
-				o.ReferencedPIDocs
-			);
 			oDataProducts.read("/CAProducts",
 				{
 					urlParameters: {
 						"$select": "CANum,CAType,InStoreRecountKey,StorageLocationID,ProductNumber,ReferencedPIDocs,ProductNumber,ProductDesc,ConversionRules,BusinessStatus,SubmitStatus,DummyProductIncl,ZoneNumber,UserID,ThumbnailURL"
 					},
-					filters: [oFilterCANum,
-						oFilterCAType,
-						oFilterLocID,
-						oFilterRefP
-					],
+					filters: this.getFiltersCAProducts(o),
 					success: function (oSuccess) {
 						oSuccess.results.forEach((producto) => {
-							debugger;
-							var i = oThis._context.getMainGTINForProduct(producto)
-							oThis._addProductToCountingActivityDetail(i); // ----> VMTC: Añadir para agregar los productos desde el inicio
+							if (Object.keys(oThis.getView().getModel("CADetails").oData).length > 0) {
+								var i = oThis._context.getMainGTINForProduct(producto)
+								oThis._addProductToCountingActivityDetail(i); // ----> VMTC: Añadir para agregar los productos desde el inicio
+							}
 						})
 					},
 					error: function (oError) {
@@ -1086,9 +1069,7 @@ sap.ui.define([
 			var sServiceUrl = "/sap/opu/odata/sap/RETAILSTORE_COUNT_STOCK_SRV";
 			return new sap.ui.model.odata.v2.ODataModel(sServiceUrl, false);
 		},
-		getConversionCajas: function (data) {
-			var conversion = "";
-			var oData = this.oDataObject();
+		getFiltersCAProducts: function (data) {
 			var filters = ["CANum", "CAType", "StorageLocationID", "ReferencedPIDocs"];
 			var oFilters = [];
 			filters.forEach(param => {
@@ -1102,26 +1083,112 @@ sap.ui.define([
 					value
 				))
 			});
+			return oFilters;
+		},
+		getConversionCajas: function (data, E) {
+			var conversion = "";
+			var oData = this.oDataObject();
+			var oThis = this;
 			oData.read("/CAProducts",
-				{	async: false,
+				{
+					async: false,
 					urlParameters: {
 						"$select": "ProductNumber,ConversionRules"
 					},
-					filters:oFilters,
-					success: function (oSuccess) {						
+					filters: this.getFiltersCAProducts(data),
+					success: function (oSuccess) {
 						oSuccess.results.forEach((producto) => {
 							if (data.ProductNumber === producto.ProductNumber) {
 								debugger;
-								conversion = producto.ConversionRules;	
-							}							
+								var valCaja = 0;
+								producto.ConversionRules.split("|").forEach((rule => {
+									if (rule.includes("CV") || rule.includes("CJ")) {
+										valCaja = rule.split("-")[1];
+									}
+								}))
+								valCaja =  Number(E.getSource()._lastValue) * Number(valCaja);
+								valCaja = Number(data.CountQty) + Number(valCaja);
+								oThis._onQuantityChangeCajas(E, valCaja);
+
+							}
 						})
 					},
 					error: function (oError) {
-						debugger;
+						reject(oError);
 					}
 				});
-			return conversion;
 		},
+		_onQuantityChangeCajas: function (E, value) {
+			var t = this;
+			//    var o = E.getSource(); --> Original, se sustituye con la línea de abajo
+			var o = this.getView().byId("QTY_INPUT");
+			var a = this.getView().getModel("CALineItems");
+			var l = E.getSource().getParent().getParent();
+			var s = l.getBindingContext("CALineItems").getPath();
+			var b = a.getObject(s);
+			//----------- Suma Custom ------------
+			// if (E.getSource().sId.includes("PZA_INPUT")) {
+			// 	var v_Aux = Number(b.CountQty) + Number(E.getSource()._lastValue);
+			// } else {
+			// 	v_Aux = Number(b.CountQty);
+			// }
+			// this.getConversionCajas(b, E);
+
+			var v_Aux = value;
+
+			// ----------------------------------- 
+			//    var v = b.CountQty; --> Original
+			var v = v_Aux.toString();
+			var p = b.CountPrecision;
+			b.bUpdateSuccess = false;
+			b.bValidateSuccess = false;
+			var u = function (k) {
+				b.bUpdateSuccess = true;
+				jQuery.proxy(t.updateLineItemInCALineItemsModel(k), t);
+			};
+			var i = function () {
+				var k = t._utilities.getText("UPDATE_ERROR_MESSAGE_LOGGING") + ": " + b.GTIN;
+				t._log.error(k);
+			};
+			var V = function (k) {
+				o.setValueState("None");
+				o.setShowValueStateMessage(false);
+				o.setValueStateText("");
+				b.bValidateSuccess = true;
+				var q = parseFloat(k);
+				t._context.updateCountQuantityForCountingActivityDetailLineItem(q, b, u, i);
+			};
+			var j = function () {
+				o.setValueState("Error");
+				o.setShowValueStateMessage(true);
+				o.setValueStateText(t._utilities.getText("QTY_ERROR_MESSAGE"));
+			};
+			this._utilities.validateQuantityFieldValue(v, p, V, j);
+			this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
+		},
+		_onComboBoxChange: function (oEvent) {
+			debugger;
+			var sQuery = this.byId("CA_LINE_ITEMS_TABLE");
+		},
+		_onComboBoxSelectionChange: function (oEvent) {
+			debugger;
+			var oTable = this.byId("CA_LINE_ITEMS_TABLE");
+			var oFilter = [];
+			switch (oEvent.getSource().getSelectedKey()) {
+				case '1': // Todos los registros
+					oFilter = null;
+					break;
+				case '2': // Contados
+					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.GT, 1 ) );
+					break;
+				case '3': // No contados
+					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.LE, 1 ) );
+					break;
+				default:
+					break;
+			}
+			oTable.getBinding("items").filter(oFilter);
+		}
 		// ---------------------------------------------------------------------------------------------
 	});
 });

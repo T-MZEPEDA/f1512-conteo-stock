@@ -65,10 +65,11 @@
 					<Label id="ITEMS_NOT_COUNTED_LB" design="Bold" class="sapUiSmallMarginTop sapUiLargeMarginBegin"
 						text="No contados ({CADetails>/TotalCountedItems})"/>
 						</HBox> -->
-                <ComboBox>
+                <ComboBox change="_onComboBoxChange"
+                            selectionChange="_onComboBoxSelectionChange">
                     <core:Item
                         key="1"
-                        text="Todas las posiciones"
+                        text="Todas las posiciones"                        
                     />
                     <core:Item
                         key="2"
@@ -173,7 +174,7 @@
                                     >
                                         <Input
                                             id="PZA_INPUT"
-                                            value="0"
+                                            value=""
                                             type="Number"
                                             change="_onQuantityChange"
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
@@ -195,7 +196,7 @@
                                     <VBox id="CAJA_COL_VL">
                                         <Input
                                             id="CAJA_INPUT"
-                                            value="{CALineItems>CountQty}"
+                                            value=""
                                             type="Number"
                                             change="_onQuantityChange"
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
