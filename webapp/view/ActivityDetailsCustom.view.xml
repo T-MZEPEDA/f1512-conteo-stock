@@ -89,7 +89,7 @@
                 <content>
                     <ndc:BarcodeScannerButton
                         id="sampleBarcodeScannerButton"
-                        scanSuccess=".onScanSuccess"
+                        scanSuccess="onScanSuccess"
                         scanFail="onScanError"
                         inputLiveUpdate="onScanLiveupdate"
                         dialogTitle="Barcode Scanner Button Sample"
@@ -99,11 +99,7 @@
                         id="ITEMS_COUNTED_LB"
                         design="Bold"
                         text="{parts:[{path:'CADetails>/TotalCountedItems'}],formatter:'._formatter.formatTotalItemsCountedLabel'}"
-                    />
-                    <!-- <Label id="ITEMS_COUNTED_GENERAL" design="Bold" class="sapUiLargeMarginBegin"
-						text="Contados ({CADetails>/TotalCountedItems})"/>
-					<Label id="ITEMS_NOT_COUNTED_LB" design="Bold" class="sapUiLargeMarginBegin"
-						text="No contados ({CADetails>/TotalCountedItems})"/> -->
+                    />                   
                 </content>
             </Toolbar>
             <Table
@@ -183,7 +179,7 @@
                                         />
                                         <Text
                                             id="PZA_TXT"
-                                            text="{CALineItems>CountQty}"
+                                            text="0"
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountTextField'}"
                                         />
                                         <Text
@@ -205,7 +201,7 @@
                                         />
                                         <Text
                                             id="CAJA_TXT"
-                                            text="{CALineItems>CountQty}"
+                                            text="0"
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountTextField'}"
                                         />
                                         <Text

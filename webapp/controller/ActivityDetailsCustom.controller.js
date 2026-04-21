@@ -22,7 +22,10 @@ sap.ui.define([
 	var setNewCount = {
 		GTIN: "",
 		CountQty: 0
-	}
+	};
+	var scanGTIN = "";
+	var oldValue = 0;
+	var initialLoad = false;
 	return sap.ui.controller("customer.app.variant.f1512.controller.ActivityDetailsCustom", {
 		//    _jSONModel: J,
 		//    _device: D,
@@ -197,35 +200,35 @@ sap.ui.define([
 		//        this.getOwnerComponent().getComponentData().oMainController.oBarcodeScanHandler.registerScanHandling(jQuery.proxy(this.onScan, this));
 		//        this.loadCAHeader(s, a, i, S);
 		//    },
-		//    CALineItemsListAttachDelete: function () {
-		//        var t = this;
-		//        var v = this.getView();
-		//        var o = this.byId("CA_LINE_ITEMS_TABLE");
-		//        o.attachDelete(function (E) {
-		//            var a = E.getParameters().listItem.getBindingContext("CALineItems").getObject();
-		//            var s = t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART1") + " " + a.ProductNumber + " - " + a.CountQty + " " + a.CountUoM + " " + t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART2");
-		//            var S = function (i) {
-		//                t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_SUCCESS_MESSAGE"));
-		//                t.setCADLineItems(i);
-		//            };
-		//            var b = function () {
-		//                t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
-		//                t._log.error(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
-		//            };
-		//            t._messageBox.show(s, t._messageBox.Icon.QUESTION, t._utilities.getText("DELETE_ITEM_CONFIRMATION_MESSAGEBOX_TITLE"), [
-		//                t._messageBox.Action.OK,
-		//                t._messageBox.Action.CANCEL
-		//            ], jQuery.proxy(function (A) {
-		//                if (A) {
-		//                    sap.ui.getCore().getEventBus().publish("nav", "back");
-		//                }
-		//                if (t._messageBox.Action.OK === A) {
-		//                    var i = v.getModel("CADetails").oData;
-		//                    t._context.deleteLineItemForCountingActivityDetail(a, i, S, b);
-		//                }
-		//            }, this));
-		//        });
-		//    },
+		CALineItemsListAttachDelete: function () {
+			var t = this;
+			var v = this.getView();
+			var o = this.byId("CA_LINE_ITEMS_TABLE");
+			o.attachDelete(function (E) {
+				var a = E.getParameters().listItem.getBindingContext("CALineItems").getObject();
+				var s = t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART1") + " " + a.ProductNumber + " - " + a.CountQty + " " + a.CountUoM + " " + t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART2");
+				var S = function (i) {
+					t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_SUCCESS_MESSAGE"));
+					t.setCADLineItems(i);
+				};
+				var b = function () {
+					t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
+					t._log.error(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
+				};
+				t._messageBox.show(s, t._messageBox.Icon.QUESTION, t._utilities.getText("DELETE_ITEM_CONFIRMATION_MESSAGEBOX_TITLE"), [
+					t._messageBox.Action.OK,
+					t._messageBox.Action.CANCEL
+				], jQuery.proxy(function (A) {
+					if (A) {
+						sap.ui.getCore().getEventBus().publish("nav", "back");
+					}
+					if (t._messageBox.Action.OK === A) {
+						var i = v.getModel("CADetails").oData;
+						t._context.deleteLineItemForCountingActivityDetail(a, i, S, b);
+					}
+				}, this));
+			});
+		},
 		//    onProductTitlePress: function (E) {
 		//        var s = E.getSource();
 		//        var o = s.getParent().getParent();
@@ -235,69 +238,76 @@ sap.ui.define([
 		//        var p = b.ProductNumber;
 		//        this._navigationHandler.gotoProductDetailsPage(p);
 		//    },
-		//    _addProductToCountingActivityDetail: function (G) {
-		//        var t = this;
-		//        t._oBusyIndicator.open();
-		//        var o = this.getView().getModel("CAHeader").getData();
-		//        var a = this.getView().getModel("CADetails").getData();
-		//        var b = this.getView().getModel("CALineItems").getData();
-		//        var i = this.byId("CA_LINE_ITEMS_TABLE").getItems();
-		//        var p;
-		//        var l = function (k) {
-		//            t._oBusyIndicator.close();
-		//            t.setCADLineItems(k);
-		//            if (t._isInputFieldExistInLineItem(i[0])) {
-		//                var m = t._getCALineItemInputBox(i[0]);
-		//                if (m.getValueState() === "Error") {
-		//                    m.setValueState("None");
-		//                    m.setShowValueStateMessage(false);
-		//                    m.setValueStateText("");
-		//                }
-		//            }
-		//        };
-		//        var j = function (k) {
-		//            t._oBusyIndicator.close();
-		//            t.updateLineItemInCALineItemsModel(k);
-		//        };
-		//        var E = function (k) {
-		//            if (t.checkRequestFailedBecauseOffline(k)) {
-		//                t._utilities.showErrorMessageBox(t._utilities.getText("INFO_MSG_NO_CONNECTION"));
-		//                t._oBusyIndicator.close();
-		//                t._oCrossAppNavigator.toExternal({ target: { shellHash: "#" } });
-		//            } else {
-		//                var m = k && k.length > 0 ? k[0] : null;
-		//                var s = m ? m.getMessage() : t._utilities.getText("SCANNED_PRODUCT_REJECTED");
-		//                t._utilities.showErrorMessageBox(s);
-		//                t._oBusyIndicator.close();
-		//            }
-		//        };
-		//        if (G === "") {
-		//            E();
-		//        } else {
-		//            if (i.length > 0) {
-		//                if (o.CountByZone === "X") {
-		//                    if (t._isInputFieldExistInLineItem(i[0])) {
-		//                        if (b[0].GTIN.replace(/^0+/, "") === G.replace(/^0+/, "") && t._getCALineItemInputBox(i[0]).getValueState() === "Error") {
-		//                            t._oBusyIndicator.close();
-		//                            return;
-		//                        }
-		//                    }
-		//                } else {
-		//                    var I = b.some(function (k, m) {
-		//                        p = m;
-		//                        return k.GTIN.replace(/^0+/, "") === G.replace(/^0+/, "");
-		//                    });
-		//                    if (t._isInputFieldExistInLineItem(i[p])) {
-		//                        if (I && t._getCALineItemInputBox(i[p]).getValueState() === "Error") {
-		//                            t._oBusyIndicator.close();
-		//                            return;
-		//                        }
-		//                    }
-		//                }
-		//            }
-		//            this._context.addProductToCountingActivityDetail(G, a, l, j, E);
-		//        }
-		//    },
+		_addProductToCountingActivityDetail: function (G) {
+			var t = this;
+			t._oBusyIndicator.open();
+			var o = this.getView().getModel("CAHeader").getData();
+			var a = this.getView().getModel("CADetails").getData();
+			var b = this.getView().getModel("CALineItems").getData();
+			var i = this.byId("CA_LINE_ITEMS_TABLE").getItems();
+			var p;
+			var l = function (k) {
+				t._oBusyIndicator.close();
+				t.setCADLineItems(k);
+				if (t._isInputFieldExistInLineItem(i[0])) {
+					var m = t._getCALineItemInputBox(i[0]);
+					if (m.getValueState() === "Error") {
+						m.setValueState("None");
+						m.setShowValueStateMessage(false);
+						m.setValueStateText("");
+					}
+				}
+			};
+			var j = function (k) {
+				t._oBusyIndicator.close();
+				t.updateLineItemInCALineItemsModel(k);
+				// VMTC: Código Custom Inicio - Inicio
+				if (Number(oldValue) > 1) {
+					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: oldValue })					
+				}else{
+					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: "0" })
+				}
+				// Código Custom - Fin
+			};
+			var E = function (k) {
+				if (t.checkRequestFailedBecauseOffline(k)) {
+					t._utilities.showErrorMessageBox(t._utilities.getText("INFO_MSG_NO_CONNECTION"));
+					t._oBusyIndicator.close();
+					t._oCrossAppNavigator.toExternal({ target: { shellHash: "#" } });
+				} else {
+					var m = k && k.length > 0 ? k[0] : null;
+					var s = m ? m.getMessage() : t._utilities.getText("SCANNED_PRODUCT_REJECTED");
+					t._utilities.showErrorMessageBox(s);
+					t._oBusyIndicator.close();
+				}
+			};
+			if (G === "") {
+				E();
+			} else {
+				if (i.length > 0) {
+					if (o.CountByZone === "X") {
+						if (t._isInputFieldExistInLineItem(i[0])) {
+							if (b[0].GTIN.replace(/^0+/, "") === G.replace(/^0+/, "") && t._getCALineItemInputBox(i[0]).getValueState() === "Error") {
+								t._oBusyIndicator.close();
+								return;
+							}
+						}
+					} else {
+						var I = b.some(function (k, m) {
+							p = m;
+							return k.GTIN.replace(/^0+/, "") === G.replace(/^0+/, "");
+						});
+						if (t._isInputFieldExistInLineItem(i[p])) {
+							if (I && t._getCALineItemInputBox(i[p]).getValueState() === "Error") {
+								t._oBusyIndicator.close();
+								return;
+							}
+						}
+					}
+				}
+				this._context.addProductToCountingActivityDetail(G, a, l, j, E);
+			}
+		},
 		//    loadCAHeader: function (s, a, i, S) {
 		//        var t = this;
 		//        this._oBusyIndicator.open();
@@ -382,7 +392,7 @@ sap.ui.define([
 		//        this._oBusyIndicator.open();
 		//        var E = function (a) {
 		//            if (t._deepEqual(t.getView().getModel("CAHeader").getData(), o)) {
-		//                if (a && a.length > 0 && o.InStoreStatus !== "3" && o.InStoreStatus !== "2") {
+		//                if (a && a.length > 0 && o.InStoreStatus !== "3" && o.InStoreStatus !== "2") {						
 		//                    var b = a[0];
 		//                    var s = b ? b.getMessage() : t._utilities.getText("CA_NOT_AVAILABLE");
 		//                    t._utilities.showErrorMessageBox(s);
@@ -569,6 +579,14 @@ sap.ui.define([
 			}
 			if (E.getSource().sId.includes("QTY_INPUT")) {
 				v_Aux = Number(b.CountQty);
+
+				if (Number(oldValue) > 1) {
+					v_Aux = oldValue;
+					oldValue = 0;
+				}
+				if (oldValue === true){
+					v_Aux = "0"
+				}
 			}
 			// ----------------------------------- 
 			//    var v = b.CountQty; --> Original
@@ -1034,6 +1052,7 @@ sap.ui.define([
 						oSuccess.results.forEach((producto) => {
 							if (Object.keys(oThis.getView().getModel("CADetails").oData).length > 0) {
 								var i = oThis._context.getMainGTINForProduct(producto)
+								oldValue = true;
 								oThis._addProductToCountingActivityDetail(i); // ----> VMTC: Añadir para agregar los productos desde el inicio
 							}
 						})
@@ -1106,7 +1125,7 @@ sap.ui.define([
 										valCaja = rule.split("-")[1];
 									}
 								}))
-								valCaja =  Number(E.getSource()._lastValue) * Number(valCaja);
+								valCaja = Number(E.getSource()._lastValue) * Number(valCaja);
 								valCaja = Number(data.CountQty) + Number(valCaja);
 								oThis._onQuantityChangeCajas(E, valCaja);
 
@@ -1127,15 +1146,7 @@ sap.ui.define([
 			var s = l.getBindingContext("CALineItems").getPath();
 			var b = a.getObject(s);
 			//----------- Suma Custom ------------
-			// if (E.getSource().sId.includes("PZA_INPUT")) {
-			// 	var v_Aux = Number(b.CountQty) + Number(E.getSource()._lastValue);
-			// } else {
-			// 	v_Aux = Number(b.CountQty);
-			// }
-			// this.getConversionCajas(b, E);
-
 			var v_Aux = value;
-
 			// ----------------------------------- 
 			//    var v = b.CountQty; --> Original
 			var v = v_Aux.toString();
@@ -1179,16 +1190,50 @@ sap.ui.define([
 					oFilter = null;
 					break;
 				case '2': // Contados
-					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.GT, 1 ) );
+					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.GT, 1));
 					break;
 				case '3': // No contados
-					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.LE, 1 ) );
+					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.LE, 1));
 					break;
 				default:
 					break;
 			}
 			oTable.getBinding("items").filter(oFilter);
-		}
+		},
+		onScanSuccess: function (oEvent) {
+			oldValue = 0;
+			scanGTIN = oEvent.getParameter("text");
+			var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
+			var aData = oTable.getBinding("items").oList;
+			var rowValue = aData.find(row => row.GTIN === scanGTIN)
+			this._addProductToCountingActivityDetail(scanGTIN);
+			if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
+				oldValue = rowValue.CountQty;
+				this.deleteLineItemForCountingActivityDetailCustom(this,rowValue);
+			}
+		},
+		formatIsProductLineItemQtyInputEnabled: function (InStoreStatus, GTIN) {
+			return true;
+			// if (GTIN === "7503052023629") {
+			// 	return true;
+			// }else{
+			// 	return false;
+			// }
+		},
+		deleteLineItemForCountingActivityDetailCustom: function (t,a) {
+
+			var S = function (i) {
+				// t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_SUCCESS_MESSAGE"));
+				t.setCADLineItems(i);
+			};
+			var b = function () {
+				// t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
+				t._log.error(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
+			};
+			
+			var i = t.getView().getModel("CADetails").oData;
+			t._context.deleteLineItemForCountingActivityDetail(a, i, S, b);
+		},
 		// ---------------------------------------------------------------------------------------------
 	});
 });
