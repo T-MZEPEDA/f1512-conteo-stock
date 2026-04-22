@@ -264,8 +264,15 @@ sap.ui.define([
 				// VMTC: Código Custom Inicio - Inicio
 				if (Number(oldValue) > 1) {
 					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: oldValue })					
-				}else{
-					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: "0" })
+				}else{										
+					if (initialLoad === false) {
+						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: "0" });						
+					}else{
+						t.byId("CA_LINE_ITEMS_TABLE").getItems().forEach(item => {
+							item.getCells()[1].getItems()[0].fireChange({ value: "INI" })
+						})	
+						initialLoad = false;											
+					}
 				}
 				// Código Custom - Fin
 			};
@@ -584,8 +591,9 @@ sap.ui.define([
 					v_Aux = oldValue;
 					oldValue = 0;
 				}
-				if (oldValue === true){
-					v_Aux = "0"
+				debugger;
+				if (E.getParameter("value") === "INI"){
+					v_Aux = 0;
 				}
 			}
 			// ----------------------------------- 
@@ -1052,7 +1060,7 @@ sap.ui.define([
 						oSuccess.results.forEach((producto) => {
 							if (Object.keys(oThis.getView().getModel("CADetails").oData).length > 0) {
 								var i = oThis._context.getMainGTINForProduct(producto)
-								oldValue = true;
+								initialLoad = true;
 								oThis._addProductToCountingActivityDetail(i); // ----> VMTC: Añadir para agregar los productos desde el inicio
 							}
 						})
