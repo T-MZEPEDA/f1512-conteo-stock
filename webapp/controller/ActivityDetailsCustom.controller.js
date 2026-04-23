@@ -178,16 +178,17 @@ sap.ui.define([
 		//    this._productSearchSelectDialog.setCountingActivityHeader(o);
 		//    this._productSearchSelectDialog.open();
 		//    },
-		// _onProductSelection: function (E) {
-		// 	var s = E.getParameter("selectedItems");
-		// 	if (s.length > 0) {
-		// 		var a = s[0].getBindingContext();
-		// 		var m = s[0].getModel();
-		// 		var b = m.getProperty("", a, false);
-		// 		var i = this._context.getMainGTINForProduct(b);
-		// 	}
-		// 	this._addProductToCountingActivityDetail(i);
-		// },
+		_onProductSelection: function (E) {
+			initialLoad = true;
+			var s = E.getParameter("selectedItems");
+			if (s.length > 0) {
+				var a = s[0].getBindingContext();
+				var m = s[0].getModel();
+				var b = m.getProperty("", a, false);
+				var i = this._context.getMainGTINForProduct(b);
+			}
+			this._addProductToCountingActivityDetail(i);
+		},
 		//    routeToDetailCallBackFunction: function (E) {
 		//        var s = E.getParameter("arguments").CANum;
 		//        var a = E.getParameter("arguments").CAType;
@@ -575,14 +576,13 @@ sap.ui.define([
 			var s = l.getBindingContext("CALineItems").getPath();
 			var b = a.getObject(s);
 			//----------- Suma Custom ------------
-
-
 			if (E.getSource().sId.includes("PZA_INPUT")) {
 				var v_Aux = Number(b.CountQty) + Number(E.getSource()._lastValue);
+				E.getSource().setValue("");
 			}
 			if (E.getSource().sId.includes("CAJA_INPUT")) {
 				v_Aux = Number(b.CountQty);
-				this.getConversionCajas(b, E);
+				this.getConversionCajas(b, E);				
 			}
 			if (E.getSource().sId.includes("QTY_INPUT")) {
 				v_Aux = Number(b.CountQty);
@@ -591,7 +591,6 @@ sap.ui.define([
 					v_Aux = oldValue;
 					oldValue = 0;
 				}
-				debugger;
 				if (E.getParameter("value") === "INI"){
 					v_Aux = 0;
 				}
@@ -625,6 +624,10 @@ sap.ui.define([
 			};
 			this._utilities.validateQuantityFieldValue(v, p, V, j);
 			this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
+			if (E.getSource().sId.includes("PZA_INPUT")) {
+				this.getView().byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].setValue("");
+				this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed()
+			}
 		},
 		//    onAddProductButtonPress: function () {
 		//        this._openProductSearchSelectDialog();
@@ -1139,6 +1142,7 @@ sap.ui.define([
 
 							}
 						})
+						E.getSource().setValue("");
 					},
 					error: function (oError) {
 						reject(oError);
@@ -1219,6 +1223,9 @@ sap.ui.define([
 				oldValue = rowValue.CountQty;
 				this.deleteLineItemForCountingActivityDetailCustom(this,rowValue);
 			}
+		},
+		onScanError: function (oEvent) {
+			debugger;
 		},
 		formatIsProductLineItemQtyInputEnabled: function (InStoreStatus, GTIN) {
 			return true;

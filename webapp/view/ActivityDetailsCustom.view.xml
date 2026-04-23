@@ -3,7 +3,8 @@
     Copyright (C) 2009-2023 SAP SE or an SAP affiliate company. All rights reserved.
 
 -->
-<core:View
+<mvc:View
+    xmlns:mvc="sap.ui.core.mvc"
     xmlns:core="sap.ui.core"
     xmlns="sap.m"
     xmlns:l="sap.ui.layout"
@@ -89,9 +90,9 @@
                 <content>
                     <ndc:BarcodeScannerButton
                         id="sampleBarcodeScannerButton"
-                        scanSuccess="onScanSuccess"
-                        scanFail="onScanError"
-                        inputLiveUpdate="onScanLiveupdate"
+                        scanSuccess="onScanSuccess"                        
+                        scanFail="onScanError"                                        
+                        inputLiveUpdate="onScanLiveupdate"                       
                         dialogTitle="Barcode Scanner Button Sample"
                         visible="true"
                     />
@@ -228,4 +229,4 @@
             />
         </footer>
     </Page>
-</core:View>
+</mvc:View>
