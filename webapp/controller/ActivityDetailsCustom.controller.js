@@ -46,24 +46,24 @@ sap.ui.define([
 		//    _history: H,
 		//    _oSubmitConfirmationDialog: null,
 		//    _oActionSheet: null,
-		//    onInit: function () {
-		//        this.resetCAHeaderModel();
-		//        this.resetCADetailsModel();
-		//        this.resetCADLineItems();
-		//        this._context = g;
-		//        this.resetCacheCADetail();
-		//        this._navigationHandler = N;
-		//        this._zoneDialogHandler = Z;
-		//        this._oCrossAppNavigator = sap.ushell.Container.getService("CrossApplicationNavigation");
-		//        this.getRouter().getRoute("activityDetailsView").attachPatternMatched(this.routeToDetailCallBackFunction, this);
-		//        this._isInputFocusInterrupt = false;
-		//        this._createActionSheet();
-		//        this._productSearchSelectDialog = null;
-		//        this._oBusyIndicator = new this._busyDialog();
-		//        this.CALineItemsListAttachDelete();
-		//        this.attachQtyInputFieldEvent();
-		//        this._utilities.getEventBus().subscribe("retail.store.countstocks1.CountingActivitiesListUpdated", "CountingActivitiesListHasUpdated", this._onCountingActivitiesListUpdated, this);
-		//    },
+		// onInit: function () {
+		// 	this.resetCAHeaderModel();
+		// 	this.resetCADetailsModel();
+		// 	this.resetCADLineItems();
+		// 	this._context = g;
+		// 	this.resetCacheCADetail();
+		// 	this._navigationHandler = N;
+		// 	this._zoneDialogHandler = Z;
+		// 	this._oCrossAppNavigator = sap.ushell.Container.getService("CrossApplicationNavigation");
+		// 	this.getRouter().getRoute("activityDetailsView").attachPatternMatched(this.routeToDetailCallBackFunction, this);
+		// 	this._isInputFocusInterrupt = false;
+		// 	this._createActionSheet();
+		// 	this._productSearchSelectDialog = null;
+		// 	this._oBusyIndicator = new this._busyDialog();
+		// 	this.CALineItemsListAttachDelete();
+		// 	this.attachQtyInputFieldEvent();
+		// 	this._utilities.getEventBus().subscribe("retail.store.countstocks1.CountingActivitiesListUpdated", "CountingActivitiesListHasUpdated", this._onCountingActivitiesListUpdated, this);		
+		// },
 		// _onCountingActivitiesListUpdated: function (s, E, o) {
 		// 	if (o && !jQuery.isEmptyObject(o)) {
 		// 		this.loadCAHeader(o.CANum, o.CAType, o.InStoreRecountKey, o.StorageLocationID);
@@ -264,17 +264,17 @@ sap.ui.define([
 				t.updateLineItemInCALineItemsModel(k);
 				// VMTC: Código Custom Inicio - Inicio
 				if (Number(oldValue) > 1) {
-					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: oldValue })					
-				}else{										
+					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: oldValue })
+				} else {
 					if (initialLoad === false) {
-						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: "0" });						
-					}else{
+						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: "0" });
+					} else {
 						t.byId("CA_LINE_ITEMS_TABLE").getItems().forEach(item => {
 							item.getCells()[1].getItems()[0].fireChange({ value: "INI" })
-						})	
-						initialLoad = false;											
+						})
+						initialLoad = false;
 					}
-				}				
+				}
 				t.setCounters_v2(t);
 				// Código Custom - Fin
 			};
@@ -346,56 +346,65 @@ sap.ui.define([
 		//        this.showStartButton(false);
 		//        this.setTableNoDataText(o.CountByZone, true);
 		//    },
-		//    openZoneDialog: function () {
-		// 		debugger;
-		//        var t = this;
-		//        var o = this.getView().getModel("CAHeader").getData();
-		//        var a = function (p) {
-		//            t.getOwnerComponent().getComponentData().oMainController.oBarcodeScanHandler.registerScanHandling(jQuery.proxy(t.onScan, t));
-		//            t.createNewCADetailsForHeaderWithZoneNumber(o, p);
-		//        };
-		//        var z = t._zoneDialogHandler.getZoneDialog();
-		//        if (!z) {
-		//            var b = function () {
-		//                t.getOwnerComponent().getComponentData().oMainController.oBarcodeScanHandler.registerScanHandling(jQuery.proxy(t.onScan, t));
-		//                t.showStartButton(o.InStoreStatus !== "3" && o.InStoreStatus !== "2");
-		//                t.setTableNoDataText(o.CountByZone, false, o.InStoreStatus === "3" || o.InStoreStatus === "2");
-		//            };
-		//            var i = function (I) {
-		//                return I.trim().length <= 0 || I.trim().length > 40 || /[^\w\d\s-]/.test(I);
-		//            };
-		//            var _ = this._utilities.getText("ZONE_DIALOG_TITLE");
-		//            var j = this._utilities.getText("DIALOG_OK_BUTTON");
-		//            var k = this._utilities.getText("DIALOG_Cancel_BUTTON");
-		//            var l = this._utilities.getText("SCAN_BUTTON_TOOLTIP");
-		//            var m = this._utilities.getText("ZONE_DIALOG_INPUT_LABEL");
-		//            this._zoneDialogHandler.setZoneDialog({
-		//                Title: _,
-		//                OKButtonName: j,
-		//                CancelButtonName: k,
-		//                ScanButtonName: l,
-		//                InputLabel: m
-		//            }, a, b, i, jQuery.proxy(this._onZoneScan, this));
-		//            z = this._zoneDialogHandler.getZoneDialog();
-		//            this.getView().addDependent(z);
-		//        } else {
-		//            this._zoneDialogHandler.clearZoneNumber();
-		//            this._zoneDialogHandler.setSuccessCallback(a);
-		//        }
-		//        var n = z.getButtons();
-		//        var s = this._device.system.phone === true || this._device.system.tablet === true;
-		//        n.some(function (p) {
-		//            if (p.sId === "SCAN_BUTTON") {
-		//                p.setVisible(s);
-		//            }
-		//        });
-		//        var O = function (p) {
-		//            a(p);
-		//            z.close();
-		//        };
-		//        this.getOwnerComponent().getComponentData().oMainController.oBarcodeScanHandler.registerScanHandling(O);
-		//        z.open();
-		//    },
+		openZoneDialog: function () {
+			debugger;
+			var t = this;
+			// ------------------- VMTC: Código custom ---------------------------  Inicio
+			t._zoneDialogHandler.ZONE_DIALOG_FRAGMENT_MODULE_NAME = "customer.app.variant.f1512.view.fragments.ZoneInputDialogCustom"; // VMTC: Código Custom -> para hacer que el Dialog ejecute el fragment Custom			
+			//    --------------------------------------- fin
+			var o = this.getView().getModel("CAHeader").getData();
+			var a = function (p) {
+				t.getOwnerComponent().getComponentData().oMainController.oBarcodeScanHandler.registerScanHandling(jQuery.proxy(t.onScan, t));
+				t.createNewCADetailsForHeaderWithZoneNumber(o, p);
+			};
+			var z = t._zoneDialogHandler.getZoneDialog();
+			if (!z) {
+				var b = function () {
+					t.getOwnerComponent().getComponentData().oMainController.oBarcodeScanHandler.registerScanHandling(jQuery.proxy(t.onScan, t));
+					t.showStartButton(o.InStoreStatus !== "3" && o.InStoreStatus !== "2");
+					t.setTableNoDataText(o.CountByZone, false, o.InStoreStatus === "3" || o.InStoreStatus === "2");
+				};
+				var i = function (I) {
+					return I.trim().length <= 0 || I.trim().length > 40 || /[^\w\d\s-]/.test(I);
+				};
+				var _ = this._utilities.getText("ZONE_DIALOG_TITLE");
+				var j = this._utilities.getText("DIALOG_OK_BUTTON");
+				var k = this._utilities.getText("DIALOG_Cancel_BUTTON");
+				var l = this._utilities.getText("SCAN_BUTTON_TOOLTIP");
+				var m = this._utilities.getText("ZONE_DIALOG_INPUT_LABEL");
+				this._zoneDialogHandler.setZoneDialog({
+					Title: _,
+					OKButtonName: j,
+					CancelButtonName: k,
+					ScanButtonName: l,
+					InputLabel: m
+				}, a, b, i, jQuery.proxy(this._onZoneScan, this));
+				z = this._zoneDialogHandler.getZoneDialog();
+				this.getView().addDependent(z);
+			} else {
+				this._zoneDialogHandler.clearZoneNumber();
+				this._zoneDialogHandler.setSuccessCallback(a);
+			}
+			var n = z.getButtons();
+			var s = this._device.system.phone === true || this._device.system.tablet === true;
+			n.some(function (p) {
+				if (p.sId === "SCAN_BUTTON") {
+					p.setVisible(s);
+				}
+			});
+			var O = function (p) {
+				a(p);
+				z.close();
+			};
+			this.getOwnerComponent().getComponentData().oMainController.oBarcodeScanHandler.registerScanHandling(O);
+			// ------------------- VMTC: Código custom ---------------------------  Inicio
+			t._zoneDialogHandler._oZoneDialog.getContent()[2].attachChange(function (oEvent) {
+				t._zoneDialogHandler._oZoneDialog.getContent()[1].setValue(oEvent.getSource().getValue());
+				// debugger;
+			}, t)
+			// -------------------------------------------------------------------- Fin
+			z.open();
+		},
 		//    loadCADetails: function (o) {
 		//        var t = this;
 		//        this._oBusyIndicator.open();
@@ -583,7 +592,7 @@ sap.ui.define([
 			}
 			if (E.getSource().sId.includes("CAJA_INPUT")) {
 				v_Aux = Number(b.CountQty);
-				this.getConversionCajas(b, E);				
+				this.getConversionCajas(b, E);
 			}
 			if (E.getSource().sId.includes("QTY_INPUT")) {
 				v_Aux = Number(b.CountQty);
@@ -592,7 +601,7 @@ sap.ui.define([
 					v_Aux = oldValue;
 					oldValue = 0;
 				}
-				if (E.getParameter("value") === "INI" || E.getParameter("value") === "0" ){
+				if (E.getParameter("value") === "INI" || E.getParameter("value") === "0") {
 					v_Aux = 0;
 				}
 			}
@@ -625,11 +634,11 @@ sap.ui.define([
 			};
 			this._utilities.validateQuantityFieldValue(v, p, V, j);
 			// this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
-			if (E.getSource().sId.includes("PZA_INPUT")) {				
+			if (E.getSource().sId.includes("PZA_INPUT")) {
 				// this.getView().byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].setValue("");
 				// this.getView().byId("sampleBarcodeScannerButton").focus();
 				this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed()
-				
+
 			}
 		},
 		//    onAddProductButtonPress: function () {
@@ -1244,7 +1253,7 @@ sap.ui.define([
 			this._addProductToCountingActivityDetail(scanGTIN);
 			if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
 				oldValue = rowValue.CountQty;
-				this.deleteLineItemForCountingActivityDetailCustom(this,rowValue);
+				this.deleteLineItemForCountingActivityDetailCustom(this, rowValue);
 			}
 		},
 		onScanError: function (oEvent) {
@@ -1258,7 +1267,7 @@ sap.ui.define([
 			// 	return false;
 			// }
 		},
-		deleteLineItemForCountingActivityDetailCustom: function (t,a) {
+		deleteLineItemForCountingActivityDetailCustom: function (t, a) {
 
 			var S = function (i) {
 				// t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_SUCCESS_MESSAGE"));
@@ -1268,10 +1277,13 @@ sap.ui.define([
 				// t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
 				t._log.error(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
 			};
-			
+
 			var i = t.getView().getModel("CADetails").oData;
 			t._context.deleteLineItemForCountingActivityDetail(a, i, S, b);
 		},
+		// document.getElementById("ComboBoxDialog").addEventListener("change", (oEvent) => {
+		// 	alert("Hola");
+		// });
 		// ---------------------------------------------------------------------------------------------
 	});
 });
