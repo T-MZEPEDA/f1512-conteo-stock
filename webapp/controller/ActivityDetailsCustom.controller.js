@@ -157,7 +157,7 @@ sap.ui.define([
 				GTIN: o.GTIN,
 				CountQty: Number(o.CountQty)
 			};
-			this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
+			// this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
 			// ----------------------------------------------------------------
 		},
 		//    _openProductSearchSelectDialog: function () {								
@@ -274,7 +274,8 @@ sap.ui.define([
 						})	
 						initialLoad = false;											
 					}
-				}
+				}				
+				t.setCounters_v2(t);
 				// Código Custom - Fin
 			};
 			var E = function (k) {
@@ -591,7 +592,7 @@ sap.ui.define([
 					v_Aux = oldValue;
 					oldValue = 0;
 				}
-				if (E.getParameter("value") === "INI"){
+				if (E.getParameter("value") === "INI" || E.getParameter("value") === "0" ){
 					v_Aux = 0;
 				}
 			}
@@ -623,10 +624,12 @@ sap.ui.define([
 				o.setValueStateText(t._utilities.getText("QTY_ERROR_MESSAGE"));
 			};
 			this._utilities.validateQuantityFieldValue(v, p, V, j);
-			this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
-			if (E.getSource().sId.includes("PZA_INPUT")) {
-				this.getView().byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].setValue("");
+			// this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
+			if (E.getSource().sId.includes("PZA_INPUT")) {				
+				// this.getView().byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].setValue("");
+				// this.getView().byId("sampleBarcodeScannerButton").focus();
 				this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed()
+				
 			}
 		},
 		//    onAddProductButtonPress: function () {
@@ -906,7 +909,8 @@ sap.ui.define([
 				o.updateBindings();
 			};
 			this._context.getTotalItemsCountedForCountingActivityDetail(a, b);
-			this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
+			this.setCounters_v2(this);
+			// this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
 		},
 		//    _createActionSheet: function () {
 		//        this._oActionSheet = new sap.m.ActionSheet("ASSOCIATE_VIEW_AS", { placement: "Top" });
@@ -1076,6 +1080,25 @@ sap.ui.define([
 			);
 			// ----------------------------------------------------------------
 		},
+		setCounters_v2: function (t) {
+			// var o = this.getView().getModel("CADetails");
+			var data = t.byId("CA_LINE_ITEMS_TABLE").getItems();
+			var lvContados = 0;
+			var lvNoContados = 0;
+			if (Object.keys(data).length > 0) {
+				if (data.length > 0) {
+					data.forEach(item => {
+						if (Number(item.getCells()[1].getItems()[0].getValue()) > 0) {
+							lvContados++;
+						} else {
+							lvNoContados++;
+						}
+					});
+				}
+			}
+			this.getView().byId("ITEMS_COUNTED_GENERAL").setText(`Contados (${lvContados})`);
+			this.getView().byId("ITEMS_NOT_COUNTED_LB").setText(`No contados (${lvNoContados})`);
+		},
 		setCounters: function () {
 			var o = this.getView().getModel("CADetails");
 			var data = o.oData;
@@ -1084,7 +1107,7 @@ sap.ui.define([
 			if (Object.keys(data).length > 0) {
 				if (data.CADetailLineItems.results.length > 0) {
 					data.CADetailLineItems.results.forEach(item => {
-						if (Number(item.CountQty) > 1 || (item.GTIN === setNewCount.GTIN && setNewCount.CountQty > 1)) {
+						if (Number(item.CountQty) > 0 || (item.GTIN === setNewCount.GTIN && setNewCount.CountQty > 0)) {
 							lvContados++;
 						} else {
 							lvNoContados++;
@@ -1187,7 +1210,7 @@ sap.ui.define([
 				o.setValueStateText(t._utilities.getText("QTY_ERROR_MESSAGE"));
 			};
 			this._utilities.validateQuantityFieldValue(v, p, V, j);
-			this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
+			// this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
 		},
 		_onComboBoxChange: function (oEvent) {
 			debugger;
@@ -1202,10 +1225,10 @@ sap.ui.define([
 					oFilter = null;
 					break;
 				case '2': // Contados
-					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.GT, 1));
+					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.GT, 0));
 					break;
 				case '3': // No contados
-					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.LE, 1));
+					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.EQ, 0));
 					break;
 				default:
 					break;
