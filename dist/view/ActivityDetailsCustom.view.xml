@@ -59,9 +59,14 @@
                     />
                 </attributes>
             </ObjectHeader>
-            <Panel>                
-                <ComboBox   id="ComboFilter"
-                            change="_onComboBoxChange"
+            <Panel>
+                <!-- <HBox >				   
+				   <Label id="ITEMS_COUNTED_GENERAL" design="Bold" class="sapUiSmallMarginTop"
+						text="Contados ({CADetails>/TotalCountedItems})"/>
+					<Label id="ITEMS_NOT_COUNTED_LB" design="Bold" class="sapUiSmallMarginTop sapUiLargeMarginBegin"
+						text="No contados ({CADetails>/TotalCountedItems})"/>
+						</HBox> -->
+                <ComboBox change="_onComboBoxChange"
                             selectionChange="_onComboBoxSelectionChange">
                     <core:Item
                         key="1"
@@ -178,8 +183,7 @@
                                 />
 
                                 <!-- INICIO -->
-                                <HBox  id="inputBoxes"
-                                       justifyContent="SpaceAround">
+                                <HBox justifyContent="SpaceAround">
                                     <!-- Código Custom: Se agrega input box de PZA - Inicio -->
                                     <VBox
                                         id="PZA_COL_VL"

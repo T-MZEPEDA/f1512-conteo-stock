@@ -1,0 +1,2 @@
+jQuery.sap.declare("customer.app.variant.f1512.Component");sap.ui.component.load({name:"retail.store.countstocks1",url:"/sap/bc/ui5_ui5/sap/RT_COUNT_STKS1"});retail.store.countstocks1.Component.extend("customer.app.variant.f1512.Component",{metadata:{manifest:"json"}});
+//# sourceMappingURL=Component.js.map

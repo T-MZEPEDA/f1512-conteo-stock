@@ -1,0 +1,39 @@
+<!--
+
+    Copyright (C) 2009-2023 SAP SE or an SAP affiliate company. All rights reserved.
+
+-->
+<core:FragmentDefinition xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:ndc="sap.ndc">
+	<Dialog id="ZONE_INPUT_DIALOG_TITLE_TEXT" title="{/TITLE}" class="sapUiPopupWithPadding"
+		initialFocus="input" contentWidth="25%">
+		<content>
+			<Label id="ZONE_DIALOG_INPUT_LABEL" text="{/ZONE_DIALOG_INPUT_LABEL}" required="true" labelFor="ZONE_DIALOG_INPUT" />
+			<Input id="ZONE_DIALOG_INPUT"
+				maxLength="40"
+				liveChange="inputOnLiveChange"
+				value="{/ZONE_NUMBER}"
+				visible="false"/>
+            <ComboBox id="ComboBoxDialog"
+			           change="_onComboBoxChangedDialog"
+                            selectionChange="_onComboBoxSelectionChangeDialog"
+                            width="100%">
+                    <core:Item
+                        key="1"
+                        text="BODEGA"                        
+                    />
+                    <core:Item
+                        key="2"
+                        text="PISO DE VENTA"
+                    />                    
+                </ComboBox>
+		</content>
+	
+		<buttons>
+			<Button id="ZONE_SCAN_BUTTON" icon="sap-icon://bar-code" press="onZoneScanButtonPressed" tooltip="{/DIALOG_SCAN_BUTTON_TITLE}"/>
+		    <Button id="ZONE_OK" text="{/DIALOG_OK_BUTTON_TITLE}" press="onOK" tooltip="{/DIALOG_OK_BUTTON_TITLE}"/>
+		    <Button id="ZONE_CANCEL" text="{/DIALOG_CANCEL_BUTTON_TITLE}" press="onCancel" tooltip="{/DIALOG_CANCEL_BUTTON_TITLE}"/>
+		</buttons>
+	</Dialog>
+</core:FragmentDefinition>

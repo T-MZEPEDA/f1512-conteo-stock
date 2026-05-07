@@ -1,0 +1,60 @@
+{
+	"_version": "1.1.0",
+	"sap.app": {
+		"_version": "1.1.0",
+		"id": "customer.app.variant.f1512",
+		"type": "application",
+		"applicationVersion": {
+			"version": "1.0.0"
+		},
+		"title": "{{COUNT_STOCK_TITLE}}",
+		"sourceTemplate": {
+			"id": "generator-extensibilty-sub",
+			"version": "1.0.0"
+		}
+	},
+	"sap.ui": {
+		"_version": "1.1.0",
+		"technology": "UI5",
+		"icons": {
+			"icon": "sap-icon://detail-view",
+			"favIcon": ""
+		},
+		"deviceTypes": {
+			"desktop": true,
+			"tablet": true,
+			"phone": true
+		},
+		"supportedThemes": [
+			"sap_hcb",
+			"sap_bluecrystal"
+		]
+	},
+	"sap.ui5": {
+		"_version": "1.1.0",
+		"dependencies": {
+			"minUI5Version": "1.114.2"
+		},
+		"extends": {
+			"component": "retail.store.countstocks1",
+			"extensions": {
+				"sap.ui.viewReplacements": {
+					"retail.store.countstocks1.view.ActivityDetails": {
+						"viewName": "customer.app.variant.f1512.view.ActivityDetailsCustom",
+						"type": "XML"
+					}
+				},
+				"sap.ui.controllerExtensions": {
+					"retail.store.countstocks1.controller.ActivityDetails": {
+						"controllerName": "customer.app.variant.f1512.controller.ActivityDetailsCustom"
+					}
+				}
+			}
+		},
+		"contentDensities": {
+			"compact": true,
+			"cozy": true
+		},
+		"flexBundle": false
+	}
+}

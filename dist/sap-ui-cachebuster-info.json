@@ -1,0 +1,14 @@
+{
+  "Component.js": 1776107691305,
+  "manifest.json": 1777333195929,
+  "controller/ActivityDetailsCustom.controller.js": 1777335120118,
+  "Component-dbg.js": 1776107691305,
+  "Component.js.map": 1777399628034,
+  "controller/ActivityDetailsCustom-dbg.controller.js": 1777335120118,
+  "controller/ActivityDetailsCustom.controller.js.map": 1777399628084,
+  "Component-preload.js": 1777399628217,
+  "Component-preload.js.map": 1777399628217,
+  "view/fragments/ZoneInputDialogCustom.fragment.xml": 1777067837181,
+  "view/ActivityDetailsCustom.view.xml": 1777335308257,
+  "index.html": 1777396885892
+}

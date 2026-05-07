@@ -270,11 +270,11 @@ sap.ui.define([
 						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: "0" });
 					} else {
 						t.byId("CA_LINE_ITEMS_TABLE").getItems().forEach(item => {
-							item.getCells()[1].getItems()[0].fireChange({ value: "INI" });
+							item.getCells()[1].getItems()[0].fireChange({ value: "INI" });							
 						})
 						initialLoad = false;
 					}
-				}
+				}				
 				t.setCounters_v2(t);
 				// Código Custom - Fin
 			};
@@ -399,6 +399,7 @@ sap.ui.define([
 			// ------------------- VMTC: Código custom ---------------------------  Inicio
 			t._zoneDialogHandler._oZoneDialog.getContent()[2].attachChange(function (oEvent) {
 				t._zoneDialogHandler._oZoneDialog.getContent()[1].setValue(oEvent.getSource().getValue());
+				// debugger;
 			}, t)
 			// -------------------------------------------------------------------- Fin
 			z.open();
@@ -750,39 +751,36 @@ sap.ui.define([
 		//        this.showStartButton(false);
 		//        this.setTableNoDataText(o.CountByZone, true);
 		//    },
-		showStartButton: function (s) {
-			if (s === undefined) {
-				s = true;
-			}
-			var S = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonStartCount"));
-			var p = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonPlus"));
-			var m = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonMinus"));
-			var a = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonAction"));
-			var o = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonScan"));
-			S.setVisible(s);
-			p.setVisible(!s);
-			m.setVisible(!s);
-			a.setVisible(!s);
-			var b = (this._device.system.phone === true || this._device.system.tablet === true) && !s;
-			b = this.extHookShowScanButton ? this.extHookShowScanButton() && b : b;
-			o.setVisible(b);
-			this._updateButtons();
-			// --------------------- Código Custom - VMTC: Se agrega para esconder botones antes del inicio del conteo - Inicio ------
-			this.disableCustomObjects(this,s);
-			// ----------------------------------- Fin
-		},
-		// hideAllButtons: function () {
-		// 	var s = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonStartCount"));
-		// 	var p = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonPlus"));
-		// 	var m = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonMinus"));
-		// 	var a = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonAction"));
-		// 	var S = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonScan"));
-		// 	s.setVisible(false);
-		// 	p.setVisible(false);
-		// 	m.setVisible(false);
-		// 	a.setVisible(false);
-		// 	S.setVisible(false);			
-		// },
+		//    showStartButton: function (s) {
+		//        if (s === undefined) {
+		//            s = true;
+		//        }
+		//        var S = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonStartCount"));
+		//        var p = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonPlus"));
+		//        var m = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonMinus"));
+		//        var a = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonAction"));
+		//        var o = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonScan"));
+		//        S.setVisible(s);
+		//        p.setVisible(!s);
+		//        m.setVisible(!s);
+		//        a.setVisible(!s);
+		//        var b = (this._device.system.phone === true || this._device.system.tablet === true) && !s;
+		//        b = this.extHookShowScanButton ? this.extHookShowScanButton() && b : b;
+		//        o.setVisible(b);
+		//        this._updateButtons();
+		//    },
+		//    hideAllButtons: function () {
+		//        var s = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonStartCount"));
+		//        var p = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonPlus"));
+		//        var m = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonMinus"));
+		//        var a = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonAction"));
+		//        var S = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonScan"));
+		//        s.setVisible(false);
+		//        p.setVisible(false);
+		//        m.setVisible(false);
+		//        a.setVisible(false);
+		//        S.setVisible(false);
+		//    },
 		//    _deleteCADetail: function () {
 		//        this._oBusyIndicator.open();
 		//        var t = this;
@@ -1255,11 +1253,19 @@ sap.ui.define([
 			if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
 				oldValue = rowValue.CountQty;
 				this.deleteLineItemForCountingActivityDetailCustom(this, rowValue);
-			}
+			}			
 			this.byId("InventoryDetailsPage").scrollTo(0, 0);
 		},
 		onScanError: function (oEvent) {
 			debugger;
+		},
+		formatIsProductLineItemQtyInputEnabled: function (InStoreStatus, GTIN) {
+			return true;
+			// if (GTIN === "7503052023629") {
+			// 	return true;
+			// }else{
+			// 	return false;
+			// }
 		},
 		deleteLineItemForCountingActivityDetailCustom: function (t, a) {
 
@@ -1275,28 +1281,9 @@ sap.ui.define([
 			var i = t.getView().getModel("CADetails").oData;
 			t._context.deleteLineItemForCountingActivityDetail(a, i, S, b);
 		},
-		disableCustomObjects: function (t,s) {
-			var f = false;
-			var o = t.getView().getModel("CAHeader").getData();
-			var sB = t.byId("sampleBarcodeScannerButton");
-			var cF = t.byId("ComboFilter");
-			var cI = t.byId("ITEMS_COUNTED_GENERAL");
-			var nCI = t.byId("ITEMS_NOT_COUNTED_LB");
-			var iB  = t.byId("inputBoxes");
-			if (o.CAType === "1") {
-				sB.setVisible(f);
-				cF.setVisible(f);
-				cI.setVisible(f);
-				nCI.setVisible(f);
-				iB.setVisible(f);
-			}else{
-				sB.setVisible(!s);
-				cF.setVisible(!s);
-				cI.setVisible(!s);
-				nCI.setVisible(!s);
-				iB.setVisible(!s);
-			}
-		},
+		// document.getElementById("ComboBoxDialog").addEventListener("change", (oEvent) => {
+		// 	alert("Hola");
+		// });
 		// ---------------------------------------------------------------------------------------------
 	});
 });
