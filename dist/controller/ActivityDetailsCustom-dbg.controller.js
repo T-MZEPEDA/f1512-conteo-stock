@@ -270,11 +270,11 @@ sap.ui.define([
 						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: "0" });
 					} else {
 						t.byId("CA_LINE_ITEMS_TABLE").getItems().forEach(item => {
-							item.getCells()[1].getItems()[0].fireChange({ value: "INI" });							
+							item.getCells()[1].getItems()[0].fireChange({ value: "INI" });
 						})
 						initialLoad = false;
 					}
-				}				
+				}
 				t.setCounters_v2(t);
 				// Código Custom - Fin
 			};
@@ -399,7 +399,6 @@ sap.ui.define([
 			// ------------------- VMTC: Código custom ---------------------------  Inicio
 			t._zoneDialogHandler._oZoneDialog.getContent()[2].attachChange(function (oEvent) {
 				t._zoneDialogHandler._oZoneDialog.getContent()[1].setValue(oEvent.getSource().getValue());
-				// debugger;
 			}, t)
 			// -------------------------------------------------------------------- Fin
 			z.open();
@@ -751,36 +750,39 @@ sap.ui.define([
 		//        this.showStartButton(false);
 		//        this.setTableNoDataText(o.CountByZone, true);
 		//    },
-		//    showStartButton: function (s) {
-		//        if (s === undefined) {
-		//            s = true;
-		//        }
-		//        var S = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonStartCount"));
-		//        var p = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonPlus"));
-		//        var m = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonMinus"));
-		//        var a = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonAction"));
-		//        var o = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonScan"));
-		//        S.setVisible(s);
-		//        p.setVisible(!s);
-		//        m.setVisible(!s);
-		//        a.setVisible(!s);
-		//        var b = (this._device.system.phone === true || this._device.system.tablet === true) && !s;
-		//        b = this.extHookShowScanButton ? this.extHookShowScanButton() && b : b;
-		//        o.setVisible(b);
-		//        this._updateButtons();
-		//    },
-		//    hideAllButtons: function () {
-		//        var s = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonStartCount"));
-		//        var p = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonPlus"));
-		//        var m = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonMinus"));
-		//        var a = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonAction"));
-		//        var S = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonScan"));
-		//        s.setVisible(false);
-		//        p.setVisible(false);
-		//        m.setVisible(false);
-		//        a.setVisible(false);
-		//        S.setVisible(false);
-		//    },
+		showStartButton: function (s) {
+			if (s === undefined) {
+				s = true;
+			}
+			var S = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonStartCount"));
+			var p = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonPlus"));
+			var m = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonMinus"));
+			var a = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonAction"));
+			var o = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonScan"));
+			S.setVisible(s);
+			p.setVisible(!s);
+			m.setVisible(!s);
+			a.setVisible(!s);
+			var b = (this._device.system.phone === true || this._device.system.tablet === true) && !s;
+			b = this.extHookShowScanButton ? this.extHookShowScanButton() && b : b;
+			o.setVisible(b);
+			this._updateButtons();
+			// --------------------- Código Custom - VMTC: Se agrega para esconder botones antes del inicio del conteo - Inicio ------
+			this.disableCustomObjects(this, s);
+			// ----------------------------------- Fin
+		},
+		// hideAllButtons: function () {
+		// 	var s = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonStartCount"));
+		// 	var p = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonPlus"));
+		// 	var m = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonMinus"));
+		// 	var a = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonAction"));
+		// 	var S = this.byId(sap.ui.core.Fragment.createId("ACTIVITY_DETAILS_FOOTER", "countStockButtonScan"));
+		// 	s.setVisible(false);
+		// 	p.setVisible(false);
+		// 	m.setVisible(false);
+		// 	a.setVisible(false);
+		// 	S.setVisible(false);			
+		// },
 		//    _deleteCADetail: function () {
 		//        this._oBusyIndicator.open();
 		//        var t = this;
@@ -820,94 +822,26 @@ sap.ui.define([
 		//            }
 		//        }, this));
 		//    },
-		//    _submitCADetail: function () {
-		//        var i = this._isValidQuantities();
-		//        if (!i) {
-		//            var m = U.getText("VALIDATION_ERROR_MESSAGE");
-		//            sap.m.MessageBox.error(m);
-		//        } else {
-		//            var t = this;
-		//            var v = this.getView();
-		//            var s = this._utilities.getText("SUBMIT_COUNT_CONFIRM_QUESTION_PART1") + "\n\n" + this._utilities.getText("SUBMIT_COUNT_CONFIRM_QUESTION_PART2");
-		//            var S = function () {
-		//                t._oBusyIndicator.close();
-		//                t._messageBoxToast.show(t._utilities.getText("SUBMIT_COUNT_SUCCESS_MESSAGE"));
-		//                var o = t.getView().getModel("CAHeader").getData();
-		//                t.resetCADetailsModel();
-		//                t.resetCADLineItems();
-		//                t.loadCAHeader(o.CANum, o.CAType, o.InStoreRecountKey, o.StorageLocationID);
-		//                var a = o.CountByZone;
-		//                if (a !== "X") {
-		//                    if (this._device.system.phone) {
-		//                        t._navigationHandler.gotoMasterPage();
-		//                    }
-		//                }
-		//                t._utilities.getEventBus().publish("retail.store.countstocks1.ReloadMasterList", "CountingActivityHeaderReloadMasterList");
-		//            };
-		//            var E = function (a) {
-		//                var o = a && a.length > 0 ? a[0] : null;
-		//                var b = t._utilities.getText("SUBMIT_COUNT_FAILURE_MESSAGE");
-		//                var T = o ? o.getMessage() : b;
-		//                t._log.error(T);
-		//                t._oBusyIndicator.close();
-		//                t._utilities.showErrorMessageBox(b);
-		//            };
-		//            this._messageBox.show(s, this._messageBox.Icon.QUESTION, this._utilities.getText("SUBMIT_COUNT_CONFIRMATION_MESSAGEBOX_TITLE"), [
-		//                this._messageBox.Action.OK,
-		//                this._messageBox.Action.CANCEL
-		//            ], jQuery.proxy(function (A) {
-		//                if (A) {
-		//                    sap.ui.getCore().getEventBus().publish("nav", "back");
-		//                }
-		//                if (t._messageBox.Action.OK === A) {
-		//                    var o = v.getModel("CADetails").oData;
-		//                    var O = function (j, k) {
-		//                        var l = [];
-		//                        var u = j.filter(function (a) {
-		//                            var b = l.indexOf(a.ProductNumber) === -1;
-		//                            if (b) {
-		//                                l.push(a.ProductNumber);
-		//                            }
-		//                            return b;
-		//                        });
-		//                        u.sort(function (a, b) {
-		//                            if (a.ProductNumber < b.ProductNumber) {
-		//                                return -1;
-		//                            }
-		//                            if (a.ProductNumber > b.ProductNumber) {
-		//                                return 1;
-		//                            }
-		//                            return 0;
-		//                        });
-		//                        if (!t._oSubmitConfirmationDialog) {
-		//                            t._oSubmitConfirmationDialog = sap.ui.xmlfragment("ProductSubmitConfirmationDialog", "retail.store.countstocks1.view.fragments.ProductSubmitConfirmationDialog", t);
-		//                            t.getView().addDependent(t._oSubmitConfirmationDialog);
-		//                            t._oSubmitConfirmationDialog.addButton(new sap.m.Button({
-		//                                text: "{i18n>CA_LINE_ITEM_ERROR_CONFIRM_SUBMIT}",
-		//                                press: function () {
-		//                                    k();
-		//                                    t._oSubmitConfirmationDialog.close();
-		//                                }.bind(this)
-		//                            }));
-		//                            t._oSubmitConfirmationDialog.addButton(new sap.m.Button({
-		//                                text: "{i18n>DIALOG_Cancel_BUTTON}",
-		//                                press: function () {
-		//                                    t._oBusyIndicator.close();
-		//                                    t._oSubmitConfirmationDialog.close();
-		//                                }.bind(this)
-		//                            }));
-		//                            t._oSubmitConfirmationDialog.setModel(t.getOwnerComponent().getModel("i18n"), "i18n");
-		//                            t._oSubmitConfirmationDialog.setModel(new J());
-		//                        }
-		//                        t._oSubmitConfirmationDialog.getModel().setData(u);
-		//                        t._oSubmitConfirmationDialog.open();
-		//                    };
-		//                    t._oBusyIndicator.open();
-		//                    t._context.submitCountingActivityDetail(o, S, E, O);
-		//                }
-		//            }, this));
-		//        }
-		//    },
+		_submitCADetail: function () {
+			// --------------------- Código Custom - VMTC: Validación de artículos no contados - Inicio ------
+			var t = this;
+			var lvNotCounted = Number(t.getView().byId("ITEMS_NOT_COUNTED_LB").getText().replace(/\D/g, ''));
+			if (lvNotCounted > 0) {
+				this._messageBox.warning(`¿Seguro que desea envíar éste recuento? \n\n No se puede modificar el recuento después de ser confirmado`, {
+				title: "Existen posiciones sin contar",
+				actions: [t._messageBox.Action.OK, t._messageBox.Action.CANCEL],				
+				onClose: function (sAction) {
+					if (sAction === "OK") {
+						t._submitCADetailCustom();	
+					}					
+				},
+				dependentOn: null
+			});
+			}else{
+				t._submitCADetailCustom();	
+			};
+			// ----------------------------------- Fin
+		},
 		_setTotalItemsCountedForCountingActivityDetail: function () {
 			var v = this.getView();
 			var o = v.getModel("CADetails");
@@ -1253,19 +1187,11 @@ sap.ui.define([
 			if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
 				oldValue = rowValue.CountQty;
 				this.deleteLineItemForCountingActivityDetailCustom(this, rowValue);
-			}			
+			}
 			this.byId("InventoryDetailsPage").scrollTo(0, 0);
 		},
 		onScanError: function (oEvent) {
 			debugger;
-		},
-		formatIsProductLineItemQtyInputEnabled: function (InStoreStatus, GTIN) {
-			return true;
-			// if (GTIN === "7503052023629") {
-			// 	return true;
-			// }else{
-			// 	return false;
-			// }
 		},
 		deleteLineItemForCountingActivityDetailCustom: function (t, a) {
 
@@ -1281,9 +1207,120 @@ sap.ui.define([
 			var i = t.getView().getModel("CADetails").oData;
 			t._context.deleteLineItemForCountingActivityDetail(a, i, S, b);
 		},
-		// document.getElementById("ComboBoxDialog").addEventListener("change", (oEvent) => {
-		// 	alert("Hola");
-		// });
+		disableCustomObjects: function (t, s) {
+			var f = false;
+			var o = t.getView().getModel("CAHeader").getData();
+			var sB = t.byId("sampleBarcodeScannerButton");
+			var cF = t.byId("ComboFilter");
+			var cI = t.byId("ITEMS_COUNTED_GENERAL");
+			var nCI = t.byId("ITEMS_NOT_COUNTED_LB");
+			var iB = t.byId("inputBoxes");
+			if (o.CAType === "1") {
+				sB.setVisible(f);
+				cF.setVisible(f);
+				cI.setVisible(f);
+				nCI.setVisible(f);
+				iB.setVisible(f);
+			} else {
+				sB.setVisible(!s);
+				cF.setVisible(!s);
+				cI.setVisible(!s);
+				nCI.setVisible(!s);
+				iB.setVisible(!s);
+			}
+		},
+		_submitCADetailCustom: function () {			
+			// -------------------------------------------------------------
+			// Este es el bloque de código original, se movío a ésta función para agregar la validación de artículos no contados
+			// Éste bloque de código estaba en la función _submitCADetail
+			var i = this._isValidQuantities();
+			if (!i) {
+				var m = U.getText("VALIDATION_ERROR_MESSAGE");
+				sap.m.MessageBox.error(m);
+			} else {
+				var t = this;
+				var v = this.getView();
+				var s = this._utilities.getText("SUBMIT_COUNT_CONFIRM_QUESTION_PART1") + "\n\n" + this._utilities.getText("SUBMIT_COUNT_CONFIRM_QUESTION_PART2");
+				var S = function () {
+					t._oBusyIndicator.close();
+					t._messageBoxToast.show(t._utilities.getText("SUBMIT_COUNT_SUCCESS_MESSAGE"));
+					var o = t.getView().getModel("CAHeader").getData();
+					t.resetCADetailsModel();
+					t.resetCADLineItems();
+					t.loadCAHeader(o.CANum, o.CAType, o.InStoreRecountKey, o.StorageLocationID);
+					var a = o.CountByZone;
+					if (a !== "X") {
+						if (this._device.system.phone) {
+							t._navigationHandler.gotoMasterPage();
+						}
+					}
+					t._utilities.getEventBus().publish("retail.store.countstocks1.ReloadMasterList", "CountingActivityHeaderReloadMasterList");
+				};
+				var E = function (a) {
+					var o = a && a.length > 0 ? a[0] : null;
+					var b = t._utilities.getText("SUBMIT_COUNT_FAILURE_MESSAGE");
+					var T = o ? o.getMessage() : b;
+					t._log.error(T);
+					t._oBusyIndicator.close();
+					t._utilities.showErrorMessageBox(b);
+				};
+				this._messageBox.show(s, this._messageBox.Icon.QUESTION, this._utilities.getText("SUBMIT_COUNT_CONFIRMATION_MESSAGEBOX_TITLE"), [
+					this._messageBox.Action.OK,
+					this._messageBox.Action.CANCEL
+				], jQuery.proxy(function (A) {
+					if (A) {
+						sap.ui.getCore().getEventBus().publish("nav", "back");
+					}
+					if (t._messageBox.Action.OK === A) {
+						var o = v.getModel("CADetails").oData;
+						var O = function (j, k) {
+							var l = [];
+							var u = j.filter(function (a) {
+								var b = l.indexOf(a.ProductNumber) === -1;
+								if (b) {
+									l.push(a.ProductNumber);
+								}
+								return b;
+							});
+							u.sort(function (a, b) {
+								if (a.ProductNumber < b.ProductNumber) {
+									return -1;
+								}
+								if (a.ProductNumber > b.ProductNumber) {
+									return 1;
+								}
+								return 0;
+							});
+							if (!t._oSubmitConfirmationDialog) {
+								t._oSubmitConfirmationDialog = sap.ui.xmlfragment("ProductSubmitConfirmationDialog", "retail.store.countstocks1.view.fragments.ProductSubmitConfirmationDialog", t);
+								t.getView().addDependent(t._oSubmitConfirmationDialog);
+								t._oSubmitConfirmationDialog.addButton(new sap.m.Button({
+									text: "{i18n>CA_LINE_ITEM_ERROR_CONFIRM_SUBMIT}",
+									press: function () {
+										k();
+										t._oSubmitConfirmationDialog.close();
+									}.bind(this)
+								}));
+								t._oSubmitConfirmationDialog.addButton(new sap.m.Button({
+									text: "{i18n>DIALOG_Cancel_BUTTON}",
+									press: function () {
+										t._oBusyIndicator.close();
+										t._oSubmitConfirmationDialog.close();
+									}.bind(this)
+								}));
+								t._oSubmitConfirmationDialog.setModel(t.getOwnerComponent().getModel("i18n"), "i18n");
+								t._oSubmitConfirmationDialog.setModel(new J());
+							}
+							t._oSubmitConfirmationDialog.getModel().setData(u);
+							t._oSubmitConfirmationDialog.open();
+						};
+						t._oBusyIndicator.open();
+						t._context.submitCountingActivityDetail(o, S, E, O);
+					}
+				}, this));
+			}
+			// -------------------------------------------------------------
+		},
 		// ---------------------------------------------------------------------------------------------
 	});
 });
