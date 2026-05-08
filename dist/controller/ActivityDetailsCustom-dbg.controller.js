@@ -178,17 +178,17 @@ sap.ui.define([
 		//    this._productSearchSelectDialog.setCountingActivityHeader(o);
 		//    this._productSearchSelectDialog.open();
 		//    },
-		_onProductSelection: function (E) {
-			initialLoad = true;
-			var s = E.getParameter("selectedItems");
-			if (s.length > 0) {
-				var a = s[0].getBindingContext();
-				var m = s[0].getModel();
-				var b = m.getProperty("", a, false);
-				var i = this._context.getMainGTINForProduct(b);
-			}
-			this._addProductToCountingActivityDetail(i);
-		},
+		// _onProductSelection: function (E) {
+		// 	initialLoad = true;
+		// 	var s = E.getParameter("selectedItems");
+		// 	if (s.length > 0) {
+		// 		var a = s[0].getBindingContext();
+		// 		var m = s[0].getModel();
+		// 		var b = m.getProperty("", a, false);
+		// 		var i = this._context.getMainGTINForProduct(b);
+		// 	}
+		// 	this._addProductToCountingActivityDetail(i);
+		// },
 		//    routeToDetailCallBackFunction: function (E) {
 		//        var s = E.getParameter("arguments").CANum;
 		//        var a = E.getParameter("arguments").CAType;
@@ -201,35 +201,35 @@ sap.ui.define([
 		//        this.getOwnerComponent().getComponentData().oMainController.oBarcodeScanHandler.registerScanHandling(jQuery.proxy(this.onScan, this));
 		//        this.loadCAHeader(s, a, i, S);
 		//    },
-		CALineItemsListAttachDelete: function () {
-			var t = this;
-			var v = this.getView();
-			var o = this.byId("CA_LINE_ITEMS_TABLE");
-			o.attachDelete(function (E) {
-				var a = E.getParameters().listItem.getBindingContext("CALineItems").getObject();
-				var s = t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART1") + " " + a.ProductNumber + " - " + a.CountQty + " " + a.CountUoM + " " + t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART2");
-				var S = function (i) {
-					t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_SUCCESS_MESSAGE"));
-					t.setCADLineItems(i);
-				};
-				var b = function () {
-					t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
-					t._log.error(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
-				};
-				t._messageBox.show(s, t._messageBox.Icon.QUESTION, t._utilities.getText("DELETE_ITEM_CONFIRMATION_MESSAGEBOX_TITLE"), [
-					t._messageBox.Action.OK,
-					t._messageBox.Action.CANCEL
-				], jQuery.proxy(function (A) {
-					if (A) {
-						sap.ui.getCore().getEventBus().publish("nav", "back");
-					}
-					if (t._messageBox.Action.OK === A) {
-						var i = v.getModel("CADetails").oData;
-						t._context.deleteLineItemForCountingActivityDetail(a, i, S, b);
-					}
-				}, this));
-			});
-		},
+		// CALineItemsListAttachDelete: function () {
+		// 	var t = this;
+		// 	var v = this.getView();
+		// 	var o = this.byId("CA_LINE_ITEMS_TABLE");
+		// 	o.attachDelete(function (E) {
+		// 		var a = E.getParameters().listItem.getBindingContext("CALineItems").getObject();
+		// 		var s = t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART1") + " " + a.ProductNumber + " - " + a.CountQty + " " + a.CountUoM + " " + t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART2");
+		// 		var S = function (i) {
+		// 			t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_SUCCESS_MESSAGE"));
+		// 			t.setCADLineItems(i);
+		// 		};
+		// 		var b = function () {
+		// 			t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
+		// 			t._log.error(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
+		// 		};
+		// 		t._messageBox.show(s, t._messageBox.Icon.QUESTION, t._utilities.getText("DELETE_ITEM_CONFIRMATION_MESSAGEBOX_TITLE"), [
+		// 			t._messageBox.Action.OK,
+		// 			t._messageBox.Action.CANCEL
+		// 		], jQuery.proxy(function (A) {
+		// 			if (A) {
+		// 				sap.ui.getCore().getEventBus().publish("nav", "back");
+		// 			}
+		// 			if (t._messageBox.Action.OK === A) {
+		// 				var i = v.getModel("CADetails").oData;
+		// 				t._context.deleteLineItemForCountingActivityDetail(a, i, S, b);
+		// 			}
+		// 		}, this));
+		// 	});
+		// },
 		//    onProductTitlePress: function (E) {
 		//        var s = E.getSource();
 		//        var o = s.getParent().getParent();
@@ -828,17 +828,17 @@ sap.ui.define([
 			var lvNotCounted = Number(t.getView().byId("ITEMS_NOT_COUNTED_LB").getText().replace(/\D/g, ''));
 			if (lvNotCounted > 0) {
 				this._messageBox.warning(`¿Seguro que desea envíar éste recuento? \n\n No se puede modificar el recuento después de ser confirmado`, {
-				title: "Existen posiciones sin contar",
-				actions: [t._messageBox.Action.OK, t._messageBox.Action.CANCEL],				
-				onClose: function (sAction) {
-					if (sAction === "OK") {
-						t._submitCADetailCustom();	
-					}					
-				},
-				dependentOn: null
-			});
-			}else{
-				t._submitCADetailCustom();	
+					title: "Existen posiciones sin contar",
+					actions: [t._messageBox.Action.OK, t._messageBox.Action.CANCEL],
+					onClose: function (sAction) {
+						if (sAction === "OK") {
+							t._submitCADetailCustom();
+						}
+					},
+					dependentOn: null
+				});
+			} else {
+				t._submitCADetailCustom();
 			};
 			// ----------------------------------- Fin
 		},
@@ -1114,6 +1114,45 @@ sap.ui.define([
 					}
 				});
 		},
+		getConversionEANCajas: function (t, GTIN, rowValue, aData) {
+			var data = t.getView().getModel("CAHeader").getData();
+			var oData = t.oDataObject();
+			oData.read("/CAProducts",
+				{
+					async: false,
+					urlParameters: {
+						"$select": "ProductNumber,ConversionRules"
+					},
+					filters: this.getFiltersCAProducts(data),
+					success: function (oSuccess) {
+						oSuccess.results.forEach((producto) => {
+							var valGTIN = "";
+							var addItem = false;
+							producto.ConversionRules.split("|").forEach((rule => {
+								if (rule.includes("PZA")) {
+									valGTIN = rule.split("-")[0];
+								};
+								if (rule.split("-")[0] === GTIN) {
+									addItem = true;
+								}
+							}));
+							if (addItem === true) {
+								addItem = false;
+								if (!rowValue) {
+									rowValue = aData.find(row => row.ProductNumber === producto.ProductNumber);
+									t.addExistsProduct(t, rowValue, valGTIN);
+								} else {
+									t._addProductToCountingActivityDetail(valGTIN);
+								}
+							}
+						}
+						);
+					},
+					error: function (oError) {
+						reject(oError);
+					}
+				});
+		},
 		_onQuantityChangeCajas: function (E, value) {
 			var t = this;
 			//    var o = E.getSource(); --> Original, se sustituye con la línea de abajo
@@ -1183,15 +1222,27 @@ sap.ui.define([
 			var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
 			var aData = oTable.getBinding("items").oList;
 			var rowValue = aData.find(row => row.GTIN === scanGTIN)
-			this._addProductToCountingActivityDetail(scanGTIN);
+			debugger;
+			// this._addProductToCountingActivityDetail(scanGTIN);  // --> Original ya jala
 			if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
-				oldValue = rowValue.CountQty;
-				this.deleteLineItemForCountingActivityDetailCustom(this, rowValue);
+				// this._addProductToCountingActivityDetail(scanGTIN)
+				// oldValue = rowValue.CountQty;
+				// this.deleteLineItemForCountingActivityDetailCustom(this, rowValue);
+				this.addExistsProduct(this, rowValue, scanGTIN);
+			} else {
+				// En caso de que no exista el EAN en la lista de productos se valida que no sea un EAN 
+				// de Caja. Si es diferente de caja se hace una conversión de EAN de caja a EAN de Pieza
+				this.getConversionEANCajas(this, scanGTIN, rowValue, aData);
 			}
 			this.byId("InventoryDetailsPage").scrollTo(0, 0);
 		},
 		onScanError: function (oEvent) {
 			debugger;
+		},
+		addExistsProduct: function (t, rowValue, scanGTIN) {
+			t._addProductToCountingActivityDetail(scanGTIN);
+			oldValue = rowValue.CountQty;
+			t.deleteLineItemForCountingActivityDetailCustom(t, rowValue);
 		},
 		deleteLineItemForCountingActivityDetailCustom: function (t, a) {
 
@@ -1229,7 +1280,7 @@ sap.ui.define([
 				iB.setVisible(!s);
 			}
 		},
-		_submitCADetailCustom: function () {			
+		_submitCADetailCustom: function () {
 			// -------------------------------------------------------------
 			// Este es el bloque de código original, se movío a ésta función para agregar la validación de artículos no contados
 			// Éste bloque de código estaba en la función _submitCADetail

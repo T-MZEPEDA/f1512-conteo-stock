@@ -32,6 +32,13 @@
 		"dependencies": {
 			"minUI5Version": "1.114.2"
 		},
+		"resources": {
+			"css": [
+				{
+					"uri": "css/style.css"
+				}
+			]
+		},
 		"extends": {
 			"component": "retail.store.countstocks1",
 			"extensions": {
