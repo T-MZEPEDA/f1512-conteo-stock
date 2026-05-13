@@ -17,6 +17,8 @@
 				visible="false"/>
             <ComboBox id="ComboBoxDialog"
 			           change="_onComboBoxChangedDialog"
+					   editable="true"
+
                             selectionChange="_onComboBoxSelectionChangeDialog"
                             width="100%">
                     <core:Item

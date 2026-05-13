@@ -26,6 +26,8 @@ sap.ui.define([
 	var scanGTIN = "";
 	var oldValue = 0;
 	var initialLoad = false;
+	var zeroLoad = false;
+	var gFilter = [];
 	return sap.ui.controller("customer.app.variant.f1512.controller.ActivityDetailsCustom", {
 		//    _jSONModel: J,
 		//    _device: D,
@@ -143,9 +145,15 @@ sap.ui.define([
 				if (j) {
 					if (!this._isInputFocusInterrupt) {
 						var l = this.byId("CA_LINE_ITEMS_TABLE");
-						var p = l.getItems()[i].sId;
-						l.setSelectedItemById(p, true);
-						this._scrollToSelectedItem();
+						if (l.getItems().length === 0) {
+							this.byId("ComboFilter").setValue("");
+							l.getBinding("items").filter(null);
+							this.byId("InventoryDetailsPage").scrollTo(0, 0);
+						} else {
+							var p = l.getItems()[i].sId;
+							l.setSelectedItemById(p, true);
+							this._scrollToSelectedItem();
+						};
 					} else {
 						this._isInputFocusInterrupt = false;
 					}
@@ -248,6 +256,15 @@ sap.ui.define([
 			var i = this.byId("CA_LINE_ITEMS_TABLE").getItems();
 			var p;
 			var l = function (k) {
+				debugger;
+				// VMTC: Código Custom -  Inicio  ------------------------------
+				if (initialLoad === true || zeroLoad === true) {
+					k[0].CountQty = "0";
+				};
+				if (Number(oldValue) > 0) {
+					k[0].CountQty = oldValue.toString();
+				}
+				// Fin ---------------------------------------------------------
 				t._oBusyIndicator.close();
 				t.setCADLineItems(k);
 				if (t._isInputFieldExistInLineItem(i[0])) {
@@ -261,20 +278,30 @@ sap.ui.define([
 			};
 			var j = function (k) {
 				t._oBusyIndicator.close();
-				t.updateLineItemInCALineItemsModel(k);
+				// t.updateLineItemInCALineItemsModel(k); // VMTC: Original se comenta para hacer una prueba
 				// VMTC: Código Custom Inicio - Inicio
+				debugger;
+				if (initialLoad === true || zeroLoad === true) {
+					k.CountQty = "0";
+				};
+				if (Number(oldValue) > 0) {
+					k.CountQty = oldValue.toString();
+				}
+				t.updateLineItemInCALineItemsModel(k);
 				if (Number(oldValue) > 1) {
 					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: oldValue })
 				} else {
-					if (initialLoad === false) {
-						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: "0" });
-					} else {
+					if (initialLoad === true) {
 						t.byId("CA_LINE_ITEMS_TABLE").getItems().forEach(item => {
-							item.getCells()[1].getItems()[0].fireChange({ value: "INI" });
+							item.getCells()[1].getItems()[0].fireChange({ value: "0" });
 						})
 						initialLoad = false;
-					}
-				}
+					};
+					if (zeroLoad === true) {
+						zeroLoad = false;
+						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[0].fireChange({ value: "0" });
+					};
+				};				
 				t.setCounters_v2(t);
 				// Código Custom - Fin
 			};
@@ -397,7 +424,7 @@ sap.ui.define([
 			};
 			this.getOwnerComponent().getComponentData().oMainController.oBarcodeScanHandler.registerScanHandling(O);
 			// ------------------- VMTC: Código custom ---------------------------  Inicio
-			t._zoneDialogHandler._oZoneDialog.getContent()[2].attachChange(function (oEvent) {
+			t._zoneDialogHandler._oZoneDialog.getContent()[2].attachSelectionChange(function (oEvent) {
 				t._zoneDialogHandler._oZoneDialog.getContent()[1].setValue(oEvent.getSource().getValue());
 			}, t)
 			// -------------------------------------------------------------------- Fin
@@ -443,11 +470,12 @@ sap.ui.define([
 		//            t._oBusyIndicator.close();
 		//        };
 		//    },
-		//    setCADetails: function (o) {
-		//        var v = this.getView();
-		//        var a = v.getModel("CADetails");
-		//        a.setData(o);
-		//    },
+		   setCADetails: function (o) {
+				debugger;
+		       var v = this.getView();
+		       var a = v.getModel("CADetails");
+		       a.setData(o);
+		   },
 		resetCADetailsModel: function () {
 			var v = this.getView();
 			v.setModel(new this._jSONModel(), "CADetails");
@@ -577,34 +605,27 @@ sap.ui.define([
 		//    },
 		_onQuantityChange: function (E) {
 			var t = this;
-			//    var o = E.getSource(); --> Original, se sustituye con la línea de abajo
-			var o = this.getView().byId("QTY_INPUT");
+			var o = E.getSource(); // --> Original, se sustituye con la línea de abajo
+			// var o = this.getView().byId("QTY_INPUT");
 			var a = this.getView().getModel("CALineItems");
 			var l = E.getSource().getParent().getParent();
 			var s = l.getBindingContext("CALineItems").getPath();
 			var b = a.getObject(s);
-			//----------- Suma Custom ------------
-			if (E.getSource().sId.includes("PZA_INPUT")) {
-				var v_Aux = Number(b.CountQty) + Number(E.getSource()._lastValue);
-				E.getSource().setValue("");
-			}
-			if (E.getSource().sId.includes("CAJA_INPUT")) {
-				v_Aux = Number(b.CountQty);
-				this.getConversionCajas(b, E);
-			}
-			if (E.getSource().sId.includes("QTY_INPUT")) {
-				v_Aux = Number(b.CountQty);
-
-				if (Number(oldValue) > 1) {
-					v_Aux = oldValue;
-					oldValue = 0;
-				}
-				if (E.getParameter("value") === "INI" || E.getParameter("value") === "0") {
-					v_Aux = 0;
-				}
-			}
+			//----------- Suma Custom ------------			
+			if (E.getParameter("value") !== E.getSource()._lastValue) {
+				var v_Aux = Number(E.getParameter("value"));
+			} else {
+				v_Aux = b.CountQty
+			};
+			if (E.getParameter("value") === "INI" || E.getParameter("value") === "0") {
+				v_Aux = 0;
+			};
+			if (Number(oldValue) > 1) {
+				v_Aux = oldValue;
+				oldValue = 0;
+			};
 			// ----------------------------------- 
-			//    var v = b.CountQty; --> Original
+			//    var v = b.CountQty; //  --> Original			   
 			var v = v_Aux.toString();
 			var p = b.CountPrecision;
 			b.bUpdateSuccess = false;
@@ -630,14 +651,7 @@ sap.ui.define([
 				o.setShowValueStateMessage(true);
 				o.setValueStateText(t._utilities.getText("QTY_ERROR_MESSAGE"));
 			};
-			this._utilities.validateQuantityFieldValue(v, p, V, j);
-			// this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
-			if (E.getSource().sId.includes("PZA_INPUT")) {
-				// this.getView().byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].setValue("");
-				// this.getView().byId("sampleBarcodeScannerButton").focus();
-				this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed()
-
-			}
+			this._utilities.validateQuantityFieldValue(v, p, V, j);			
 		},
 		//    onAddProductButtonPress: function () {
 		//        this._openProductSearchSelectDialog();
@@ -1007,9 +1021,11 @@ sap.ui.define([
 					filters: this.getFiltersCAProducts(o),
 					success: function (oSuccess) {
 						oSuccess.results.forEach((producto) => {
+							
+							debugger;
 							if (Object.keys(oThis.getView().getModel("CADetails").oData).length > 0) {
 								var i = oThis._context.getMainGTINForProduct(producto)
-								initialLoad = true;
+								initialLoad = true;								
 								oThis._addProductToCountingActivityDetail(i); // ----> VMTC: Añadir para agregar los productos desde el inicio
 							}
 						})
@@ -1080,8 +1096,7 @@ sap.ui.define([
 			});
 			return oFilters;
 		},
-		getConversionCajas: function (data, E) {
-			var conversion = "";
+		getConversionCajas: function (E, data, valPza, qtyCaja, objQTY) {
 			var oData = this.oDataObject();
 			var oThis = this;
 			oData.read("/CAProducts",
@@ -1101,9 +1116,11 @@ sap.ui.define([
 										valCaja = rule.split("-")[1];
 									}
 								}))
-								valCaja = Number(E.getSource()._lastValue) * Number(valCaja);
-								valCaja = Number(data.CountQty) + Number(valCaja);
-								oThis._onQuantityChangeCajas(E, valCaja);
+								// valCaja = Number(E.getSource()._lastValue) * Number(valCaja);
+								valCaja = Number(qtyCaja) * Number(valCaja);
+								var SumaTotal = Number(data.CountQty) + Number(valCaja) + Number(valPza);
+								objQTY.fireChange({ value: `${SumaTotal}` });
+								// oThis._onQuantityChangeCajas(E, valCaja);
 
 							}
 						})
@@ -1194,13 +1211,11 @@ sap.ui.define([
 			// this.setCounters(); // --> VMTC: Se agrega para agregar el valor a los indicadores de conteo
 		},
 		_onComboBoxChange: function (oEvent) {
-			debugger;
 			var sQuery = this.byId("CA_LINE_ITEMS_TABLE");
 		},
 		_onComboBoxSelectionChange: function (oEvent) {
-			debugger;
-			var oTable = this.byId("CA_LINE_ITEMS_TABLE");
 			var oFilter = [];
+			var oTable = this.byId("CA_LINE_ITEMS_TABLE");
 			switch (oEvent.getSource().getSelectedKey()) {
 				case '1': // Todos los registros
 					oFilter = null;
@@ -1227,11 +1242,12 @@ sap.ui.define([
 			if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
 				// this._addProductToCountingActivityDetail(scanGTIN)
 				// oldValue = rowValue.CountQty;
-				// this.deleteLineItemForCountingActivityDetailCustom(this, rowValue);
+				// this.deleteLineItemForCountingActivityDetailCustom(this, rowValue);				
 				this.addExistsProduct(this, rowValue, scanGTIN);
 			} else {
 				// En caso de que no exista el EAN en la lista de productos se valida que no sea un EAN 
 				// de Caja. Si es diferente de caja se hace una conversión de EAN de caja a EAN de Pieza
+				zeroLoad = true;
 				this.getConversionEANCajas(this, scanGTIN, rowValue, aData);
 			}
 			this.byId("InventoryDetailsPage").scrollTo(0, 0);
@@ -1242,6 +1258,11 @@ sap.ui.define([
 		addExistsProduct: function (t, rowValue, scanGTIN) {
 			t._addProductToCountingActivityDetail(scanGTIN);
 			oldValue = rowValue.CountQty;
+			if (Number(oldValue) > 0) {
+				zeroLoad = false;
+			} else {
+				zeroLoad = true;
+			}
 			t.deleteLineItemForCountingActivityDetailCustom(t, rowValue);
 		},
 		deleteLineItemForCountingActivityDetailCustom: function (t, a) {
@@ -1279,6 +1300,7 @@ sap.ui.define([
 				nCI.setVisible(!s);
 				iB.setVisible(!s);
 			}
+			t.byId("ComboFilter").setValue("");
 		},
 		_submitCADetailCustom: function () {
 			// -------------------------------------------------------------
@@ -1371,6 +1393,42 @@ sap.ui.define([
 				}, this));
 			}
 			// -------------------------------------------------------------
+		},
+		_onQuantitySubmit: function (E) {
+			// Se agrega este bloque de código para la funcionalidad de agregar Piezas y cajas al mismo tiempo
+			debugger;
+			var a = this.getView().getModel("CALineItems");
+			var l = E.getSource().getParent().getParent();
+			var s = l.getBindingContext("CALineItems").getPath();
+			var data = a.getObject(s);
+
+			let lvPza = "";
+			let lvCaja = "";
+			let lvActual = "";
+			let objPza = E.getSource().getParent().getParent().getItems()[0].getItems()[0];
+			let objCaja = E.getSource().getParent().getParent().getItems()[1].getItems()[0];
+			let objQTY = E.getSource().getParent().getParent().getParent().getItems()[0];
+			if (E.getSource().sId.includes("PZA_INPUT")) {
+				lvPza = E.getSource()._lastValue;
+				lvCaja = objCaja.getValue();
+			}
+			if (E.getSource().sId.includes("CAJA_INPUT")) {
+				lvPza = objPza.getValue();
+				lvCaja = E.getSource()._lastValue;
+			}
+			objCaja.setValue("");
+			objPza.setValue("");
+
+			// lvActual = E.getSource().getParent().getParent().getParent().getItems()[0].getValue();
+			lvActual = Number(data.CountQty);
+
+			if (lvCaja === "") {
+				var SumaTotal = Number(lvPza) + Number(lvActual);
+				objQTY.fireChange({ value: `${SumaTotal}` });
+			} else {
+				this.getConversionCajas(E, data, lvPza, lvCaja, objQTY);
+			}
+			this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed();
 		},
 		// ---------------------------------------------------------------------------------------------
 	});

@@ -60,12 +60,12 @@
                 </attributes>
             </ObjectHeader>
             <Panel>                
-                <ComboBox   id="ComboFilter"
-                            change="_onComboBoxChange"
-                            selectionChange="_onComboBoxSelectionChange">
+                <ComboBox   id="ComboFilter"                            
+                            selectionChange="_onComboBoxSelectionChange"
+                            >
                     <core:Item
                         key="1"
-                        text="Todas las posiciones"                        
+                        text="Todas las posiciones"                                                
                     />
                     <core:Item
                         key="2"
@@ -189,7 +189,7 @@
                                             id="PZA_INPUT"
                                             value=""
                                             type="Number"
-                                            change="_onQuantityChange"
+                                            submit="_onQuantitySubmit"
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
                                             enabled="{parts:[{path:'CAHeader>/InStoreStatus'}], formatter:'._formatter.isProductLineItemQtyInputEnabled'}"
                                             width="3.5rem"
@@ -211,7 +211,7 @@
                                             id="CAJA_INPUT"
                                             value=""
                                             type="Number"
-                                            change="_onQuantityChange"
+                                            submit="_onQuantitySubmit"                                            
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
                                             enabled="{parts:[{path:'CAHeader>/InStoreStatus'}], formatter:'._formatter.isProductLineItemQtyInputEnabled'}"
                                             width="3.5rem"
