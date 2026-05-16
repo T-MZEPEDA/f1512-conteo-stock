@@ -146,9 +146,10 @@ sap.ui.define([
 					if (!this._isInputFocusInterrupt) {
 						var l = this.byId("CA_LINE_ITEMS_TABLE");
 						if (l.getItems().length === 0) {
-							this.byId("ComboFilter").setValue("");
+							this.byId("ComboFilter").revertSelection();
 							l.getBinding("items").filter(null);
 							this.byId("InventoryDetailsPage").scrollTo(0, 0);
+							this.setCounters_v2(this);
 						} else {
 							var p = l.getItems()[i].sId;
 							l.setSelectedItemById(p, true);
@@ -256,22 +257,9 @@ sap.ui.define([
 			var i = this.byId("CA_LINE_ITEMS_TABLE").getItems();
 			var p;
 			var l = function (k) {
-				debugger;
-				// VMTC: Código Custom -  Inicio  ------------------------------
-				if (k.length > 1) {
-					k.forEach((element, index) => {
-						element.CALineNum = index + 1;
-					});
-				}
+				// VMTC: Código Custom -  Inicio  ------------------------------				
 				if (initialLoad === true || zeroLoad === true) {
 					k[0].CountQty = "0";
-					// Hay un bug en el que al agregar varios productos a la vez coloca el parámetro CA_LINE_NUM  = 1 en todas las 
-					// posiciones del Array k, por lo que se hace un ciclo Foreach para colocar el valor correcto de CA_LINE_NUM en cada posición del Array k, esto se hace solo para la carga inicial del producto, una vez que el producto ya está cargado el valor de CA_LINE_NUM se asigna correctamente
-					// if (k.length > 1) {
-					// 	k.forEach((element, index) => {
-					// 		element.CALineNum = index + 1;
-					// 	});
-					// }
 				};
 				if (Number(oldValue) > 0) {
 					k[0].CountQty = oldValue.toString();
@@ -292,7 +280,6 @@ sap.ui.define([
 				t._oBusyIndicator.close();
 				// t.updateLineItemInCALineItemsModel(k); // VMTC: Original se comenta para hacer una prueba
 				// VMTC: Código Custom Inicio - Inicio
-				debugger;
 				if (initialLoad === true || zeroLoad === true) {
 					k.CountQty = "0";
 				};
@@ -353,7 +340,6 @@ sap.ui.define([
 						}
 					}
 				}
-				debugger;
 				this._context.addProductToCountingActivityDetail(G, a, l, j, E);
 			}
 		},
@@ -1049,14 +1035,12 @@ sap.ui.define([
 					filters: this.getFiltersCAProducts(o),
 					success: function (oSuccess) {
 						oSuccess.results.forEach((producto, index) => {
-
-							debugger;
 							var caDetails = oThis.getView().getModel("CADetails").oData;
 							if (Object.keys(caDetails).length > 0) {
 								var i = oThis._context.getMainGTINForProduct(producto)
 								initialLoad = true;
 								oThis._addProductToCountingActivityDetail(i); // ----> VMTC: Añadir para agregar los productos desde el inicio
-							if (oThis.getView().getModel("CALineItems").oData.length < index + 1) {
+								if (oThis.getView().getModel("CALineItems").oData.length < index + 1) {
 									{
 										oThis.setCADLineItems([{
 											Action: "C",
@@ -1078,8 +1062,9 @@ sap.ui.define([
 											ZoneNumber: caDetails.ZoneNumber
 										}]);
 									};
-								};	
-							}})
+								};
+							}
+						})
 					},
 					error: function (oError) {
 						debugger;
@@ -1091,13 +1076,15 @@ sap.ui.define([
 		},
 		setCounters_v2: function (t) {
 			// var o = this.getView().getModel("CADetails");
-			var data = t.byId("CA_LINE_ITEMS_TABLE").getItems();
+			// var data = t.byId("CA_LINE_ITEMS_TABLE").getItems();
+			var data = t.getView().getModel("CALineItems").oData;
 			var lvContados = 0;
 			var lvNoContados = 0;
 			if (Object.keys(data).length > 0) {
 				if (data.length > 0) {
 					data.forEach(item => {
-						if (Number(item.getCells()[1].getItems()[0].getValue()) > 0) {
+						// if (Number(item.getCells()[1].getItems()[0].getValue()) > 0) {
+						if (Number(item.CountQty) > 0) {
 							lvContados++;
 						} else {
 							lvNoContados++;
@@ -1290,9 +1277,6 @@ sap.ui.define([
 			debugger;
 			// this._addProductToCountingActivityDetail(scanGTIN);  // --> Original ya jala
 			if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
-				// this._addProductToCountingActivityDetail(scanGTIN)
-				// oldValue = rowValue.CountQty;
-				// this.deleteLineItemForCountingActivityDetailCustom(this, rowValue);				
 				this.addExistsProduct(this, rowValue, scanGTIN);
 			} else {
 				// En caso de que no exista el EAN en la lista de productos se valida que no sea un EAN 
@@ -1337,7 +1321,7 @@ sap.ui.define([
 			var cI = t.byId("ITEMS_COUNTED_GENERAL");
 			var nCI = t.byId("ITEMS_NOT_COUNTED_LB");
 			var iB = t.byId("inputBoxes");
-			if (o.CAType === "1") {
+			if (o.CAType === "1" || o.CACountStatus === "X") {
 				sB.setVisible(f);
 				cF.setVisible(f);
 				cI.setVisible(f);
@@ -1351,6 +1335,7 @@ sap.ui.define([
 				iB.setVisible(!s);
 			}
 			t.byId("ComboFilter").setValue("");
+			// this.byId("ComboFilter").revertSelection();
 		},
 		_submitCADetailCustom: function () {
 			// -------------------------------------------------------------
@@ -1446,7 +1431,6 @@ sap.ui.define([
 		},
 		_onQuantitySubmit: function (E) {
 			// Se agrega este bloque de código para la funcionalidad de agregar Piezas y cajas al mismo tiempo
-			debugger;
 			var a = this.getView().getModel("CALineItems");
 			var l = E.getSource().getParent().getParent();
 			var s = l.getBindingContext("CALineItems").getPath();
