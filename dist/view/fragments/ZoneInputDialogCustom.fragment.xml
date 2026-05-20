@@ -53,6 +53,7 @@
             <Button
                 id="ZONE_SCAN_BUTTON"
                 icon="sap-icon://bar-code"
+                visible="false"
                 press="onZoneScanButtonPressed"
                 tooltip="{/DIALOG_SCAN_BUTTON_TITLE}"
             />
