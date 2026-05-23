@@ -28,6 +28,7 @@ sap.ui.define([
 	var initialLoad = false;
 	var zeroLoad = false;
 	var gFilter = [];
+	var superIndex = 0;
 	return sap.ui.controller("customer.app.variant.f1512.controller.ActivityDetailsCustom", {
 		//    _jSONModel: J,
 		//    _device: D,
@@ -520,7 +521,7 @@ sap.ui.define([
 			var a = function (b) {
 				t.setCADetails(b);
 				t.loadCADLineItems(b);
-				t.addInitialData();
+				t.addInitialData_V2();
 			};
 			this._context.createCountingActivityDetailForZone(o, z, a, E);
 			// this.addInitialData(); // 13.05.2026 - Se comenta para ver lo del bug // --> VMTC: Se agrega para cargar datos iniciales a partir del OData CAProducts
@@ -1020,18 +1021,24 @@ sap.ui.define([
 		//        }
 		//    }
 		// -------------------------------- Inicio de funciones Custom ---------------------------------
-		addInitialData: function () {
+		addInitialData: function (iSkip, iTop) {
 			//    ------------- VMTC -> Código Custom--------------------------
 			var oDataProducts = this.oDataObject();
+			var skipAccum = iSkip;
 			var o = this.getView().getModel("CAHeader").getData();
 			var oThis = this;
+			debugger;
 			oDataProducts.read("/CAProducts",
 				{
 					urlParameters: {
-						"$select": "CANum,CAType,InStoreRecountKey,StorageLocationID,ProductNumber,ReferencedPIDocs,ProductNumber,ProductDesc,ConversionRules,BusinessStatus,SubmitStatus,DummyProductIncl,ZoneNumber,UserID,ThumbnailURL"
+						"$select": "CANum,CAType,InStoreRecountKey,StorageLocationID,ProductNumber,ReferencedPIDocs,ProductNumber,ProductDesc,ConversionRules,BusinessStatus,SubmitStatus,DummyProductIncl,ZoneNumber,UserID,ThumbnailURL",
+						"$orderby": "ProductNumber asc",
+						"$skip": iSkip,
+						"$top": iTop
 					},
 					filters: this.getFiltersCAProducts(o),
 					success: function (oSuccess) {
+						debugger;
 						var itemsArray = [];
 						var resultsLength = oSuccess.results.length;
 						oSuccess.results.forEach((producto, index) => {
@@ -1042,6 +1049,7 @@ sap.ui.define([
 								oThis._addProductToCountingActivityDetail(i); // ----> VMTC: Añadir para agregar los productos desde el inicio
 								if (oThis.getView().getModel("CALineItems").oData.length < index + 1) {
 									{
+										itemsArray = oThis.getView().getModel("CALineItems").oData;
 										itemsArray.push({
 											Action: "C",
 											CALineNum: index + 1,
@@ -1063,11 +1071,17 @@ sap.ui.define([
 										});
 									};
 								};
-								if (index === resultsLength - 1 && itemsArray.length > 0) {
+								if (index === resultsLength - 1 && itemsArray.length > 0 && resultsLength > 0) {
 									oThis.getView().getModel("CALineItems").setData(itemsArray);
+									itemsArray = [];
 								}
 							}
-						})
+							if (resultsLength > 0) {
+								itemsArray = [];
+								// skipAccum = skipAccum + iTop;
+								// oThis.addInitialData(skipAccum, iTop);
+							}
+						});
 					},
 					error: function (oError) {
 						debugger;
@@ -1077,6 +1091,65 @@ sap.ui.define([
 			);
 			// ----------------------------------------------------------------
 		},
+		// ---------------------------- TEST de paginación ----------------------------
+		addInitialData_V2: function () {
+			var oThis = this;
+			var sServiceUrl = "/sap/opu/odata/sap/ZGW_F1512_EXTENDED_SRV";
+			var oDataObject = new sap.ui.model.odata.v2.ODataModel(sServiceUrl, false);
+			var mParameters = {
+				groupId: "paginationGroup",
+				success: function (oSuccess) {
+					debugger;
+					var v = oThis.getView();
+					oSuccess.to_Items.results.forEach(function (item) {
+						item.__metadata.id = item.__metadata.id.replace("/ZGW_F1512_EXTENDED_SRV/DetItemsSet", "/RETAILSTORE_COUNT_STOCK_SRV/CADetailLineItems");
+						item.__metadata.type = "RETAILSTORE_COUNT_STOCK_SRV.CADetail";
+						item.__metadata.uri = item.__metadata.uri.replace("/ZGW_F1512_EXTENDED_SRV/DetItemsSet", "/RETAILSTORE_COUNT_STOCK_SRV/CADetailLineItems");
+					});
+					v.getModel("CADetails").oData.CADetailLineItems.results = oSuccess.to_Items.results;
+					var nModel = v.getModel("CADetails").oData;
+					var sKey = oThis._context._getCountingActivityHeaderKey(nModel);
+					var objCountingActivities = oThis._context.getModel().oData.CountingActivities[sKey];
+					objCountingActivities.CountingActivityDetails.CADetailLineItems.results = oSuccess.to_Items.results;
+					oThis.setCADetails(nModel);
+					oThis.loadCADLineItems(nModel);
+					oThis._oBusyIndicator.close();
+				},
+				error: function (oError) {
+					debugger;
+					oThis._oBusyIndicator.close();
+				}
+			};
+			var caDetails = this.getView().getModel("CADetails").oData;
+			var initialDataModel = {
+				"dummy": "X",
+				"to_Items": [{
+					"CANum": caDetails.CANum,
+					"CAType": caDetails.CAType,
+					"InStoreRecountKey": caDetails.InStoreRecountKey,
+					"StorageLocationID": caDetails.StorageLocationID,
+					"ZoneNumber": caDetails.ZoneNumber,
+					"CALineNum": caDetails.CALineNum,
+					"SiteID": caDetails.SiteID,
+					"CreateDateTime": caDetails.CreationDatetime,
+					"ProductDesc": caDetails.ReferencedPIDocs,
+				}]
+			}
+			oDataObject.create("/InitialDataSet", initialDataModel, mParameters);
+
+			oDataObject.submitChanges({
+				groupId: "paginationGroup",
+				success: function (oData) {
+					var o = oThis.byId("CA_LINE_ITEMS_TABLE");
+					o.setNoDataText("Agregando productos, por favor espere...");
+					oThis._oBusyIndicator.open();
+				},
+				error: function (oError) {
+					debugger;
+				}
+			});
+		},
+		// ----------------------------------------------------------------------------
 		setCounters_v2: function (t) {
 			var data = t.getView().getModel("CALineItems").oData;
 			var lvContados = 0;
@@ -1084,7 +1157,6 @@ sap.ui.define([
 			if (Object.keys(data).length > 0) {
 				if (data.length > 0) {
 					data.forEach(item => {
-						// if (Number(item.getCells()[1].getItems()[0].getValue()) > 0) {
 						if (Number(item.CountQty) > 0) {
 							lvContados++;
 						} else {
@@ -1177,6 +1249,7 @@ sap.ui.define([
 					},
 					filters: this.getFiltersCAProducts(data),
 					success: function (oSuccess) {
+						var existsGTIN = false;
 						oSuccess.results.forEach((producto) => {
 							var valGTIN = "";
 							var addItem = false;
@@ -1186,20 +1259,27 @@ sap.ui.define([
 								};
 								if (rule.split("-")[0] === GTIN) {
 									addItem = true;
+									existsGTIN = true;
 								}
 							}));
 							if (addItem === true) {
 								addItem = false;
 								if (!rowValue) {
+									existsGTIN = true;
 									rowValue = aData.find(row => row.ProductNumber === producto.ProductNumber);
 									t.addExistsProduct(t, rowValue, valGTIN);
 								} else {
+									existsGTIN = true;
 									t._addProductToCountingActivityDetail(valGTIN);
 								}
 							}
 						}
 						);
+						if (existsGTIN === false && GTIN) {
+							t._addProductToCountingActivityDetail(GTIN);
+						}
 					},
+
 					error: function (oError) {
 						reject(oError);
 					}
@@ -1267,23 +1347,26 @@ sap.ui.define([
 			oTable.getBinding("items").filter(oFilter);
 		},
 		onScanSuccess: function (oEvent) {
+			debugger;
 			oldValue = 0;
 			scanGTIN = oEvent.getParameter("text");
-			var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
-			var aData = oTable.getBinding("items").oList;
-			var rowValue = aData.find(row => row.GTIN === scanGTIN)
-			if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
-				this.addExistsProduct(this, rowValue, scanGTIN);
-			} else {
-				// En caso de que no exista el EAN en la lista de productos se valida que no sea un EAN 
-				// de Caja. Si es diferente de caja se hace una conversión de EAN de caja a EAN de Pieza
-				zeroLoad = true;
-				this.getConversionEANCajas(this, scanGTIN, rowValue, aData);
+			if (scanGTIN) {
+				var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
+				var aData = oTable.getBinding("items").oList;
+				var rowValue = aData.find(row => row.GTIN === scanGTIN)
+				if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
+					this.addExistsProduct(this, rowValue, scanGTIN);
+				} else {
+					// En caso de que no exista el EAN en la lista de productos se valida que no sea un EAN 
+					// de Caja. Si es diferente de caja se hace una conversión de EAN de caja a EAN de Pieza
+					zeroLoad = true;
+					this.getConversionEANCajas(this, scanGTIN, rowValue, aData);
+				}
+				this.byId("InventoryDetailsPage").scrollTo(0, 0);
 			}
-			this.byId("InventoryDetailsPage").scrollTo(0, 0);
 		},
 		onScanError: function (oEvent) {
-			debugger;
+			// debugger;
 		},
 		addExistsProduct: function (t, rowValue, scanGTIN) {
 			t._addProductToCountingActivityDetail(scanGTIN);

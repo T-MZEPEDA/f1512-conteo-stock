@@ -50,7 +50,7 @@
                     />
                     <ObjectAttribute
                         id="ITEMS_NOT_COUNTED_LB"
-                        text="No contados (0)"
+                        text="Contados cero (0)"
                     />
                     <!-- VMTC LABEL CUSTOM - Fin -->
                     <!-- Extends count activity details header with new information -->
@@ -103,7 +103,7 @@
                 mode="{parts:[{path: 'CADetails>/CountByZone'}],formatter:'._formatter.formatCALineItemsTableDeletionMode'}"
                 items="{path:'CALineItems>/'}"
                 growing="true"
-                growingThreshold="100"                
+                growingThreshold="10"                
                 sticky="ColumnHeaders,HeaderToolbar,InfoToolbar"
             >
             <headerToolbar>
