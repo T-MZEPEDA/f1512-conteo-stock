@@ -211,35 +211,36 @@ sap.ui.define([
 		//        this.getOwnerComponent().getComponentData().oMainController.oBarcodeScanHandler.registerScanHandling(jQuery.proxy(this.onScan, this));
 		//        this.loadCAHeader(s, a, i, S);
 		//    },
-		// CALineItemsListAttachDelete: function () {
-		// 	var t = this;
-		// 	var v = this.getView();
-		// 	var o = this.byId("CA_LINE_ITEMS_TABLE");
-		// 	o.attachDelete(function (E) {
-		// 		var a = E.getParameters().listItem.getBindingContext("CALineItems").getObject();
-		// 		var s = t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART1") + " " + a.ProductNumber + " - " + a.CountQty + " " + a.CountUoM + " " + t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART2");
-		// 		var S = function (i) {
-		// 			t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_SUCCESS_MESSAGE"));
-		// 			t.setCADLineItems(i);
-		// 		};
-		// 		var b = function () {
-		// 			t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
-		// 			t._log.error(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
-		// 		};
-		// 		t._messageBox.show(s, t._messageBox.Icon.QUESTION, t._utilities.getText("DELETE_ITEM_CONFIRMATION_MESSAGEBOX_TITLE"), [
-		// 			t._messageBox.Action.OK,
-		// 			t._messageBox.Action.CANCEL
-		// 		], jQuery.proxy(function (A) {
-		// 			if (A) {
-		// 				sap.ui.getCore().getEventBus().publish("nav", "back");
-		// 			}
-		// 			if (t._messageBox.Action.OK === A) {
-		// 				var i = v.getModel("CADetails").oData;
-		// 				t._context.deleteLineItemForCountingActivityDetail(a, i, S, b);
-		// 			}
-		// 		}, this));
-		// 	});
-		// },
+		CALineItemsListAttachDelete: function () {
+			var t = this;
+			var v = this.getView();
+			var o = this.byId("CA_LINE_ITEMS_TABLE");
+			o.attachDelete(function (E) {
+				var a = E.getParameters().listItem.getBindingContext("CALineItems").getObject();
+				var s = t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART1") + " " + a.ProductNumber + " - " + a.CountQty + " " + a.CountUoM + " " + t._utilities.getText("DELETE_ITEM_CONFIRM_QUESTION_PART2");
+				var S = function (i) {
+					t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_SUCCESS_MESSAGE"));
+					t.setCADLineItems(i);
+				};
+				var b = function () {
+					t._messageBoxToast.show(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
+					t._log.error(t._utilities.getText("ITEM_DELETE_FAILURE_MESSAGE"));
+				};
+				t._messageBox.show(s, t._messageBox.Icon.QUESTION, t._utilities.getText("DELETE_ITEM_CONFIRMATION_MESSAGEBOX_TITLE"), [
+					t._messageBox.Action.OK,
+					t._messageBox.Action.CANCEL
+				], jQuery.proxy(function (A) {
+					if (A) {
+						sap.ui.getCore().getEventBus().publish("nav", "back");
+					}
+					if (t._messageBox.Action.OK === A) {
+						var i = v.getModel("CADetails").oData;
+						t._context.deleteLineItemForCountingActivityDetail(a, i, S, b);
+						t.deleteSingleScannedProduct(i, a.ProductNumber);
+					}
+				}, this));
+			});
+		},
 		//    onProductTitlePress: function (E) {
 		//        var s = E.getSource();
 		//        var o = s.getParent().getParent();
@@ -810,45 +811,47 @@ sap.ui.define([
 		// 	a.setVisible(false);
 		// 	S.setVisible(false);			
 		// },
-		//    _deleteCADetail: function () {
-		//        this._oBusyIndicator.open();
-		//        var t = this;
-		//        var v = this.getView();
-		//        var o = this.getView().getModel("CAHeader").getData();
-		//        var s = this._utilities.getText("CANCEL_COUNT_CONFIRM_QUESTION_PART1");
-		//        if (o.CountByZone === "X") {
-		//            s = s + "\n\n" + this._utilities.getText("CANCEL_COUNT_CONFIRM_QUESTION_PART2");
-		//        }
-		//        var S = function () {
-		//            t._messageBoxToast.show(t._utilities.getText("CANCEL_COUNT_SUCCESS_MESSAGE"));
-		//            t.resetCADetailsModel();
-		//            t.resetCADLineItems();
-		//            t.showStartButton(o.InStoreStatus !== "3" && o.InStoreStatus !== "2");
-		//            t.setTableNoDataText(o.CountByZone, false, o.InStoreStatus === "3" || o.InStoreStatus === "2");
-		//            t._oBusyIndicator.close();
-		//        };
-		//        var E = function () {
-		//            var a = t._utilities.getText("CANCEL_COUNT_FAILURE_MESSAGE");
-		//            t._messageBoxToast.show(a);
-		//            t._log.error(a);
-		//            t._oBusyIndicator.close();
-		//        };
-		//        this._messageBox.show(s, t._messageBox.Icon.QUESTION, t._utilities.getText("CANCEL_COUNT_CONFIRMATION_MESSAGEBOX_TITLE"), [
-		//            t._messageBox.Action.OK,
-		//            t._messageBox.Action.CANCEL
-		//        ], jQuery.proxy(function (a) {
-		//            if (a) {
-		//                sap.ui.getCore().getEventBus().publish("nav", "back");
-		//            }
-		//            if (t._messageBox.Action.CANCEL === a) {
-		//                t._oBusyIndicator.close();
-		//            }
-		//            if (t._messageBox.Action.OK === a) {
-		//                var b = v.getModel("CADetails").oData;
-		//                t._context.deleteCountingActivityDetail(b, S, E);
-		//            }
-		//        }, this));
-		//    },
+		_deleteCADetail: function () {
+			// debugger;
+			this._oBusyIndicator.open();
+			var t = this;
+			var v = this.getView();
+			var o = this.getView().getModel("CAHeader").getData();
+			var s = this._utilities.getText("CANCEL_COUNT_CONFIRM_QUESTION_PART1");
+			if (o.CountByZone === "X") {
+				s = s + "\n\n" + this._utilities.getText("CANCEL_COUNT_CONFIRM_QUESTION_PART2");
+			}
+			var S = function () {
+				t._messageBoxToast.show(t._utilities.getText("CANCEL_COUNT_SUCCESS_MESSAGE"));
+				t.resetCADetailsModel();
+				t.resetCADLineItems();
+				t.showStartButton(o.InStoreStatus !== "3" && o.InStoreStatus !== "2");
+				t.setTableNoDataText(o.CountByZone, false, o.InStoreStatus === "3" || o.InStoreStatus === "2");
+				t._oBusyIndicator.close();
+			};
+			var E = function () {
+				var a = t._utilities.getText("CANCEL_COUNT_FAILURE_MESSAGE");
+				t._messageBoxToast.show(a);
+				t._log.error(a);
+				t._oBusyIndicator.close();
+			};
+			this._messageBox.show(s, t._messageBox.Icon.QUESTION, t._utilities.getText("CANCEL_COUNT_CONFIRMATION_MESSAGEBOX_TITLE"), [
+				t._messageBox.Action.OK,
+				t._messageBox.Action.CANCEL
+			], jQuery.proxy(function (a) {
+				if (a) {
+					sap.ui.getCore().getEventBus().publish("nav", "back");
+				}
+				if (t._messageBox.Action.CANCEL === a) {
+					t._oBusyIndicator.close();
+				}
+				if (t._messageBox.Action.OK === a) {
+					var b = v.getModel("CADetails").oData;
+					t._context.deleteCountingActivityDetail(b, S, E);
+					t.deleteScannedTable(b);  // VMTC: Borrar tabla ZTA_MM_ART_CONT al cancelar el conteo
+				}
+			}, this));
+		},
 		_submitCADetail: function () {
 			// --------------------- Código Custom - VMTC: Validación de artículos no contados - Inicio ------
 			var t = this;
@@ -1027,7 +1030,7 @@ sap.ui.define([
 			var skipAccum = iSkip;
 			var o = this.getView().getModel("CAHeader").getData();
 			var oThis = this;
-			debugger;
+			// debugger;
 			oDataProducts.read("/CAProducts",
 				{
 					urlParameters: {
@@ -1099,7 +1102,7 @@ sap.ui.define([
 			var mParameters = {
 				groupId: "paginationGroup",
 				success: function (oSuccess) {
-					debugger;
+					// debugger;
 					var v = oThis.getView();
 					oSuccess.to_Items.results.forEach(function (item) {
 						item.__metadata.id = item.__metadata.id.replace("/ZGW_F1512_EXTENDED_SRV/DetItemsSet", "/RETAILSTORE_COUNT_STOCK_SRV/CADetailLineItems");
@@ -1116,7 +1119,7 @@ sap.ui.define([
 					oThis._oBusyIndicator.close();
 				},
 				error: function (oError) {
-					debugger;
+					// debugger;
 					oThis._oBusyIndicator.close();
 				}
 			};
@@ -1221,14 +1224,21 @@ sap.ui.define([
 						oSuccess.results.forEach((producto) => {
 							if (data.ProductNumber === producto.ProductNumber) {
 								var valCaja = 0;
-								producto.ConversionRules.split("|").forEach((rule => {
-									if (rule.includes("CV") || rule.includes("CJ")) {
-										valCaja = rule.split("-")[1];
-									}
-								}))
+								if (producto.ConversionRules.split("|").length === 1) {
+									valCaja = 1;
+								} else {
+									producto.ConversionRules.split("|").forEach((rule => {
+										if (rule.includes("CV") || rule.includes("CJ")) {
+											valCaja = rule.split("-")[1];
+										}
+									}))
+								}
 								valCaja = Number(qtyCaja) * Number(valCaja);
 								var SumaTotal = Number(data.CountQty) + Number(valCaja) + Number(valPza);
 								objQTY.fireChange({ value: `${SumaTotal}` });
+								if (valCaja > 0) {
+									return;
+								}
 							}
 						})
 						E.getSource().setValue("");
@@ -1241,6 +1251,7 @@ sap.ui.define([
 		getConversionEANCajas: function (t, GTIN, rowValue, aData) {
 			var data = t.getView().getModel("CAHeader").getData();
 			var oData = t.oDataObject();
+			var exitLoop = false;
 			oData.read("/CAProducts",
 				{
 					async: false,
@@ -1260,6 +1271,13 @@ sap.ui.define([
 								if (rule.split("-")[0] === GTIN) {
 									addItem = true;
 									existsGTIN = true;
+									if (rule.split("-")[2] == "IN") {
+										t._messageBoxToast.show("No se permite EAN 'INNER' ");
+										addItem = false;
+										GTIN = null;
+									}
+									exitLoop = true;
+									return;
 								}
 							}));
 							if (addItem === true) {
@@ -1267,10 +1285,14 @@ sap.ui.define([
 								if (!rowValue) {
 									existsGTIN = true;
 									rowValue = aData.find(row => row.ProductNumber === producto.ProductNumber);
+									t.fillScannedTable(rowValue.ProductNumber);
 									t.addExistsProduct(t, rowValue, valGTIN);
 								} else {
 									existsGTIN = true;
 									t._addProductToCountingActivityDetail(valGTIN);
+								}
+								if (exitLoop === true) {
+									return;
 								}
 							}
 						}
@@ -1347,7 +1369,7 @@ sap.ui.define([
 			oTable.getBinding("items").filter(oFilter);
 		},
 		onScanSuccess: function (oEvent) {
-			debugger;
+			// debugger;
 			oldValue = 0;
 			scanGTIN = oEvent.getParameter("text");
 			if (scanGTIN) {
@@ -1355,6 +1377,7 @@ sap.ui.define([
 				var aData = oTable.getBinding("items").oList;
 				var rowValue = aData.find(row => row.GTIN === scanGTIN)
 				if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
+					this.fillScannedTable(rowValue.ProductNumber);
 					this.addExistsProduct(this, rowValue, scanGTIN);
 				} else {
 					// En caso de que no exista el EAN en la lista de productos se valida que no sea un EAN 
@@ -1398,6 +1421,7 @@ sap.ui.define([
 			var cI = t.byId("ITEMS_COUNTED_GENERAL");
 			var nCI = t.byId("ITEMS_NOT_COUNTED_LB");
 			var iB = t.byId("inputBoxes");
+			var tBaseUOM = t.byId("BASE_UOM_TXT");
 			if (o.CAType === "1" || o.CACountStatus === "X") {
 				sB.setVisible(f);
 				cF.setVisible(f);
@@ -1538,8 +1562,106 @@ sap.ui.define([
 			} else {
 				this.getConversionCajas(E, data, lvPza, lvCaja, objQTY);
 			}
+
+			this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed(); // --> Se comenta para evitar que se abra el escáner cada vez que se agrega una cantidad, se deja la función para que se pueda llamar desde un botón de escaneo personalizado
+		},
+		_onTotalSubmit: function (oEvent) {
 			this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed();
 		},
+		fillScannedTable: function (productNumber) {
+			var sServiceUrl = "/sap/opu/odata/sap/ZAPI_ZONAS_F1512";
+			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl, false);
+			var rowValue = this.getView().getModel("CADetails").oData;
+			var mParameters = {
+				groupId: "paginationGroup",
+				success: function (oSuccess) {
+					// debugger;
+				},
+				error: function (oError) {
+					debugger;
+				}
+			};
+			var nModel = {
+				"iblnr": rowValue.CANum,
+				"gjahr": rowValue.ReferencedPIDocs.split("-")[1],
+				"matnr": productNumber,
+				"werks": rowValue.StorageLocationID,
+				"zone_number": rowValue.ZoneNumber,
+			};
+			oData.create("/Escaneados", nModel, mParameters)
+
+			oData.submitChanges({
+				groupId: "paginationGroup",
+				success: function (oData) {
+					let v_x = "x";
+				},
+				error: function (oError) {
+					// debugger;
+				}
+			});
+		},
+		deleteScannedTable: function (rowValue) {
+
+			var sServiceUrl = "/sap/opu/odata/sap/ZGW_F1512_EXTENDED_SRV";
+			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl);
+			var lIblnr = rowValue.CANum;
+			var lGjahr = rowValue.ReferencedPIDocs.split("-")[1];
+			var lZone = rowValue.ZoneNumber.replaceAll(" ", "%20");
+			var sPath = `/DeleteEscaneadosSet(Iblnr='${lIblnr}',Gjahr='${lGjahr}',ZoneNumber='${lZone}')`;
+			oData.remove(sPath, {
+				groupId: "group1",
+				success: function (oData) {
+					let v_x = "x";
+				},
+				error: function (oError) {
+					debugger;
+				}
+			});
+			oData.submitChanges({
+				groupId: "group1",
+				success: function (oData) {
+					let v_x = "x";
+				},
+				error: function (oError) {
+
+				}
+			});
+		},
+		deleteSingleScannedProduct: function (rowValue, productNumber) {
+			// debugger;
+			var sServiceUrl = "/sap/opu/odata/sap/ZAPI_ZONAS_F1512";
+			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl);
+			var lIblnr = rowValue.CANum;
+			var lGjahr = rowValue.ReferencedPIDocs.split("-")[1];
+			var sPath = `/Escaneados(iblnr='${lIblnr}',gjahr='${lGjahr}',matnr='${productNumber}',werks='${rowValue.StorageLocationID}')`;
+			oData.remove(sPath, {
+				groupId: "group1",
+				success: function (oData) {
+					let v_x = "x";
+				},
+				error: function (oError) {
+
+				}
+			});
+			oData.submitChanges({
+				groupId: "group1",
+				success: function (oData) {
+					let v_x = "x";
+				},
+				error: function (oError) {
+
+				}
+			});
+		},
+		formatTextBaseUOM: function (iCAType, CountUoM) {
+			let text = "";
+			if (iCAType === '1') {
+				text = `${CountUoM}`;
+			} else {
+				text = `Total ${CountUoM}`;
+			}
+			return text;
+		}
 		// ---------------------------------------------------------------------------------------------
 	});
 });
