@@ -1372,11 +1372,16 @@ sap.ui.define([
 			// debugger;
 			oldValue = 0;
 			scanGTIN = oEvent.getParameter("text");
+			if (Number(scanGTIN) === 0) {
+				var s = this._utilities.getText("SCANNED_PRODUCT_REJECTED");
+				this._utilities.showErrorMessageBox(s);
+				return;
+			};
 			if (scanGTIN) {
 				var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
 				var aData = oTable.getBinding("items").oList;
 				var rowValue = aData.find(row => row.GTIN === scanGTIN)
-				if (aData.findIndex(row => row.GTIN === scanGTIN) > 0) {
+				if (aData.findIndex(row => row.GTIN === scanGTIN) > -1) {
 					this.fillScannedTable(rowValue.ProductNumber);
 					this.addExistsProduct(this, rowValue, scanGTIN);
 				} else {
@@ -1392,7 +1397,12 @@ sap.ui.define([
 			// debugger;
 		},
 		addExistsProduct: function (t, rowValue, scanGTIN) {
-			t._addProductToCountingActivityDetail(scanGTIN);
+			let oFilter = this.getView().byId("ComboFilter");
+			if (oFilter.getSelectedKey() === "3" && rowValue.CountQty > 0) {
+				oFilter.revertSelection();
+				this.byId("CA_LINE_ITEMS_TABLE").getBinding("items").filter(null);
+			}
+			// t._addProductToCountingActivityDetail(scanGTIN);
 			oldValue = rowValue.CountQty;
 			if (Number(oldValue) > 0) {
 				zeroLoad = false;
@@ -1400,6 +1410,7 @@ sap.ui.define([
 				zeroLoad = true;
 			}
 			t.deleteLineItemForCountingActivityDetailCustom(t, rowValue);
+			t._addProductToCountingActivityDetail(scanGTIN);
 		},
 		deleteLineItemForCountingActivityDetailCustom: function (t, a) {
 
@@ -1440,7 +1451,7 @@ sap.ui.define([
 		},
 		_submitCADetailCustom: function () {
 			// -------------------------------------------------------------
-			// Este es el bloque de código original, se movío a ésta función para agregar la validación de artículos no contados
+			// Este es el bloque de código original, se movió a ésta función para agregar la validación de artículos no contados
 			// Éste bloque de código estaba en la función _submitCADetail
 			var i = this._isValidQuantities();
 			if (!i) {
@@ -1578,7 +1589,7 @@ sap.ui.define([
 					// debugger;
 				},
 				error: function (oError) {
-					debugger;
+					// debugger;
 				}
 			};
 			var nModel = {
@@ -1633,7 +1644,7 @@ sap.ui.define([
 			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl);
 			var lIblnr = rowValue.CANum;
 			var lGjahr = rowValue.ReferencedPIDocs.split("-")[1];
-			var sPath = `/Escaneados(iblnr='${lIblnr}',gjahr='${lGjahr}',matnr='${productNumber}',werks='${rowValue.StorageLocationID}')`;
+			var sPath = `/Escaneados(iblnr='${lIblnr}',gjahr='${lGjahr}',matnr='${productNumber}',werks='${rowValue.StorageLocationID}',zone_number='${rowValue.ZoneNumber.replaceAll(" ", "%20")}')`;
 			oData.remove(sPath, {
 				groupId: "group1",
 				success: function (oData) {
