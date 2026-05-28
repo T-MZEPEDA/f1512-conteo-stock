@@ -303,6 +303,9 @@ sap.ui.define([
 					};
 				};
 				t.setCounters_v2(t);
+				// VMTC: Código Custom - Se agrega para habilitar de forma automática el teclado numérico en la Hand Held, no funciona del todo bien en versión de Escritorio
+				// t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[1].getItems()[0].setValue("");
+				// t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[1].getItems()[0].focus();				
 				// Código Custom - Fin
 			};
 			var E = function (k) {
@@ -1369,7 +1372,7 @@ sap.ui.define([
 			oTable.getBinding("items").filter(oFilter);
 		},
 		onScanSuccess: function (oEvent) {
-			// debugger;
+			debugger;
 			oldValue = 0;
 			scanGTIN = oEvent.getParameter("text");
 			if (Number(scanGTIN) === 0) {
@@ -1390,7 +1393,7 @@ sap.ui.define([
 					zeroLoad = true;
 					this.getConversionEANCajas(this, scanGTIN, rowValue, aData);
 				}
-				this.byId("InventoryDetailsPage").scrollTo(0, 0);
+				this.byId("InventoryDetailsPage").scrollTo(100, 0);
 			}
 		},
 		onScanError: function (oEvent) {
@@ -1398,7 +1401,7 @@ sap.ui.define([
 		},
 		addExistsProduct: function (t, rowValue, scanGTIN) {
 			let oFilter = this.getView().byId("ComboFilter");
-			if (oFilter.getSelectedKey() === "3" && rowValue.CountQty > 0) {
+			if ( (oFilter.getSelectedKey() === "3" && rowValue.CountQty > 0) || oFilter.getSelectedKey() === "2" && Number(rowValue.CountQty) === 0 ) {
 				oFilter.revertSelection();
 				this.byId("CA_LINE_ITEMS_TABLE").getBinding("items").filter(null);
 			}
@@ -1470,8 +1473,8 @@ sap.ui.define([
 					t.loadCAHeader(o.CANum, o.CAType, o.InStoreRecountKey, o.StorageLocationID);
 					var a = o.CountByZone;
 					if (a !== "X") {
-						// if (this._device.system.phone) { // Original --> Se comenta para habilitra navegación a la página de resumen en dispositivos móviles en Hand Held
-						if (this._device.system.phone || t._device.system.tablet === true) {
+						// if (this._device.system.phone) { // Original --> Se comenta para habilitar navegación a la página de resumen en dispositivos móviles en Hand Held
+						if (this._device.system.phone || this._device.system.tablet) {
 							t._navigationHandler.gotoMasterPage();
 						}
 					}
@@ -1548,6 +1551,7 @@ sap.ui.define([
 			var l = E.getSource().getParent().getParent();
 			var s = l.getBindingContext("CALineItems").getPath();
 			var data = a.getObject(s);
+			var lvalidaNegativo = false;
 
 			let lvPza = "";
 			let lvCaja = "";
@@ -1563,6 +1567,32 @@ sap.ui.define([
 				lvPza = objPza.getValue();
 				lvCaja = E.getSource()._lastValue;
 			}
+			// Validar que los montos ingresados no sean negativos
+			if (Number(lvPza) < 0) {
+				objPza.setValueState("Error");
+				objPza.setShowValueStateMessage(true);
+				objPza.setValueStateText(t._utilities.getText("QTY_ERROR_MESSAGE"));
+				lvalidaNegativo = true;
+			}else{
+				objPza.setValueState("None");
+				objPza.setShowValueStateMessage(false);
+			};
+
+			if (Number(lvCaja) < 0) {
+				objCaja.setValueState("Error");
+				objCaja.setShowValueStateMessage(true);
+				objCaja.setValueStateText(t._utilities.getText("QTY_ERROR_MESSAGE"));
+				lvalidaNegativo = true;
+			}else{
+				objCaja.setValueState("None");
+				objCaja.setShowValueStateMessage(false);
+			};
+
+			if (lvalidaNegativo === true) {
+				lvalidaNegativo = false;
+				return;
+			};
+
 			objCaja.setValue("");
 			objPza.setValue("");
 			lvActual = Number(data.CountQty);
@@ -1572,7 +1602,7 @@ sap.ui.define([
 				objQTY.fireChange({ value: `${SumaTotal}` });
 			} else {
 				this.getConversionCajas(E, data, lvPza, lvCaja, objQTY);
-			}
+			};
 
 			this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed(); // --> Se comenta para evitar que se abra el escáner cada vez que se agrega una cantidad, se deja la función para que se pueda llamar desde un botón de escaneo personalizado
 		},
@@ -1672,7 +1702,7 @@ sap.ui.define([
 				text = `Total ${CountUoM}`;
 			}
 			return text;
-		}
+		},
 		// ---------------------------------------------------------------------------------------------
 	});
 });

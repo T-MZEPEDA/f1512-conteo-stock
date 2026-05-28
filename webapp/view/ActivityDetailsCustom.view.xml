@@ -121,7 +121,10 @@
                         id="ITEMS_COUNTED_LB"
                         design="Bold"
                         text="{parts:[{path:'CADetails>/TotalCountedItems'}],formatter:'._formatter.formatTotalItemsCountedLabel'}"
-                    />                   
+                    />
+                    <Button id="testButton"
+                            text="Test de Navegacion"
+                            press="_onTestButtonPress"/>
                 </content>
                 </OverflowToolbar>
             </headerToolbar>
@@ -188,7 +191,7 @@
                                         <Input
                                             id="PZA_INPUT"
                                             value=""
-                                            type="Number"
+                                            type="Number"                                            
                                             submit="_onQuantitySubmit"
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
                                             enabled="{parts:[{path:'CAHeader>/InStoreStatus'}], formatter:'._formatter.isProductLineItemQtyInputEnabled'}"
