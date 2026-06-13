@@ -109,22 +109,27 @@
             <headerToolbar>
                 <OverflowToolbar >
                     <content>
-                    <ndc:BarcodeScannerButton
-                        id="sampleBarcodeScannerButton"
-                        scanSuccess="onScanSuccess"                        
-                        scanFail="onScanError"                                        
-                        inputLiveUpdate="onScanLiveupdate"                       
-                        dialogTitle="Barcode Scanner Button Sample"
+                    <Button 
+                        id="BARCODE_SCAN_BUTTON"
+                        icon="sap-icon://bar-code"
+                        press="onBarcodeDialogPress"/>
+                    <!-- <ndc:BarcodeScannerButton
+                        id="sampleBarcodeScannerButton"    
+                        provideFallback="false"                                             
+                        scanSuccess="onScanSuccess"                                                                                       
+                        scanFail="onScanError"     
+                        inputLiveUpdate="onScanLiveupdate"                                               
+                        dialogTitle="Escanear producto"
                         visible="true"                        
-                    />
+                    /> -->
                     <Label
                         id="ITEMS_COUNTED_LB"
                         design="Bold"
                         text="{parts:[{path:'CADetails>/TotalCountedItems'}],formatter:'._formatter.formatTotalItemsCountedLabel'}"
                     />
-                    <Button id="testButton"
+                    <!-- <Button id="testButton"
                             text="Test de Navegacion"
-                            press="_onTestButtonPress"/>
+                            press="_onTestButtonPress"/> -->
                 </content>
                 </OverflowToolbar>
             </headerToolbar>

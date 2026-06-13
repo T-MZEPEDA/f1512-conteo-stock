@@ -36,17 +36,7 @@
                 selectionChange="_onComboBoxSelectionChangeDialog"
                 width="100%"
                 visible="true"
-            />
-            <!-- <core:ListItem key="{consecutivo}" text="{zona}"/> -->
-            <!-- <core:Item
-                        key="1"
-                        text="BODEGA"                        
-                    />
-                    <core:Item
-                        key="2"
-                        text="PISO DE VENTA"
-                    />                     -->
-            <!-- </ComboBox> -->
+            />           
         </content>
 
         <buttons>

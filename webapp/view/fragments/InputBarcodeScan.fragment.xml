@@ -1,0 +1,38 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:ndc="sap.ndc"
+>
+    <Dialog
+        id="InputBarcodeScanDialog"
+        icon="sap-icon://bar-code"
+        title="Escanear producto"        
+        initialFocus="input"
+        contentWidth="100%"
+        afterOpen="onAfterOpenScanInput"
+    >
+        <content>
+            <Input
+                id="input"
+                liveChange="onScanLiveupdate"
+                width="100%"
+                visible="true"
+                placeholder="Ingrese el código de barras"                
+            />
+        </content>
+        <buttons>           
+            <Button
+                id="INPUTBARCODE_OK"
+                text="OK"                
+                type="Emphasized"
+                tooltip="{/DIALOG_OK_BUTTON_TITLE}"
+            />
+            <Button
+                id="INPUTBARCODE_CANCEL"
+                text="Cancelar"
+                press="onCancelScanInput"
+                tooltip="{/DIALOG_CANCEL_BUTTON_TITLE}"
+            />
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>

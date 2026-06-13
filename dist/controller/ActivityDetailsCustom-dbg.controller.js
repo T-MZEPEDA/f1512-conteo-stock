@@ -1216,17 +1216,23 @@ sap.ui.define([
 		getConversionCajas: function (E, data, valPza, qtyCaja, objQTY) {
 			var oData = this.oDataObject();
 			var oThis = this;
+			var oFilters = this.getFiltersCAProducts(data); 
+			oFilters.push(new sap.ui.model.Filter(
+					"ConversionRules",
+					sap.ui.model.FilterOperator.EQ,
+					data.GTIN
+				))
 			oData.read("/CAProducts",
 				{
 					async: false,
 					urlParameters: {
 						"$select": "ProductNumber,ConversionRules"
 					},
-					filters: this.getFiltersCAProducts(data),
+					filters: oFilters,
 					success: function (oSuccess) {
 						oSuccess.results.forEach((producto) => {
 							if (data.ProductNumber === producto.ProductNumber) {
-								var valCaja = 0;
+								var valCaja = 1;
 								if (producto.ConversionRules.split("|").length === 1) {
 									valCaja = 1;
 								} else {
@@ -1234,7 +1240,7 @@ sap.ui.define([
 										if (rule.includes("CV") || rule.includes("CJ")) {
 											valCaja = rule.split("-")[1];
 										}
-									}))
+									}));									
 								}
 								valCaja = Number(qtyCaja) * Number(valCaja);
 								var SumaTotal = Number(data.CountQty) + Number(valCaja) + Number(valPza);
@@ -1255,13 +1261,19 @@ sap.ui.define([
 			var data = t.getView().getModel("CAHeader").getData();
 			var oData = t.oDataObject();
 			var exitLoop = false;
+			var oFilters = t.getFiltersCAProducts(data); 
+			oFilters.push(new sap.ui.model.Filter(
+					"ConversionRules",
+					sap.ui.model.FilterOperator.EQ,
+					GTIN
+				));			
 			oData.read("/CAProducts",
 				{
 					async: false,
 					urlParameters: {
 						"$select": "ProductNumber,ConversionRules"
 					},
-					filters: this.getFiltersCAProducts(data),
+					filters: oFilters,
 					success: function (oSuccess) {
 						var existsGTIN = false;
 						oSuccess.results.forEach((producto) => {
@@ -1274,10 +1286,11 @@ sap.ui.define([
 								if (rule.split("-")[0] === GTIN) {
 									addItem = true;
 									existsGTIN = true;
-									if (rule.split("-")[2] == "IN") {
+									if (rule.split("-")[2] === "IN" && rule.split("-")[0] === GTIN) {										
 										t._messageBoxToast.show("No se permite EAN 'INNER' ");
 										addItem = false;
 										GTIN = null;
+										t._oBusyIndicator.close();
 									}
 									exitLoop = true;
 									return;
@@ -1396,16 +1409,81 @@ sap.ui.define([
 				this.byId("InventoryDetailsPage").scrollTo(100, 0);
 			}
 		},
+		onBarcodeDialogPress: function () {
+			var oView = this.getView();
+			var oDialog = oView.byId("InputBarcodeScanDialog");
+			var oThis = this;
+			// create dialog lazily
+			if (!oDialog) {
+				// create dialog via fragment factory
+				oDialog = sap.ui.xmlfragment(oView.getId(), "customer.app.variant.f1512.view.fragments.InputBarcodeScan");				
+				oDialog.attachAfterOpen(this.onAfterOpenScanInput, this);
+				oDialog.getContent()[0].attachLiveChange(this.onScanLiveupdate, this);				
+				oDialog.getButtons()[0].attachPress(function (oEvent) { // Botón Aceptar
+					let lGTIN = oEvent.getSource().getParent().getContent()[0].getValue();
+					oThis.addEAN(lGTIN);
+				});
+
+				oDialog.getButtons()[1].attachPress(function (oEvent) { // Botón Cancelar
+					var oDialog = oView.byId("InputBarcodeScanDialog");
+					oDialog.close();
+				});
+				oView.addDependent(oDialog);
+			}			
+			oDialog.getContent()[0].setValue(""); // Limpiar el campo de input cada vez que se abre el diálogo			
+			oDialog.open();			
+		},
+		onCancelScanInput: function (oEvent) {
+			var oDialog = this.getView().byId("InputBarcodeScanDialog");
+			oDialog.close();
+		},
+		onScanLiveupdate: function (oEvent) {
+			let lGTIN = oEvent.getParameter("value");
+			this.addEAN(lGTIN);
+		},
+		addEAN: function (GTIN) {
+			var oDialog = this.getView().byId("InputBarcodeScanDialog");
+			this._oBusyIndicator.open();
+			scanGTIN = GTIN;
+			if (Number(scanGTIN) === 0) {
+				var s = this._utilities.getText("SCANNED_PRODUCT_REJECTED");
+				this._utilities.showErrorMessageBox(s);
+				this._oBusyIndicator.close();
+				oDialog.close();
+				return;
+			};
+			if (scanGTIN) {
+				var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
+				var aData = oTable.getBinding("items").oList;
+				var rowValue = aData.find(row => row.GTIN === scanGTIN)
+				if (aData.findIndex(row => row.GTIN === scanGTIN) > -1) {
+					this.fillScannedTable(rowValue.ProductNumber);
+					this.addExistsProduct(this, rowValue, scanGTIN);
+				} else {
+					// En caso de que no exista el EAN en la lista de productos se valida que no sea un EAN 
+					// de Caja. Si es diferente de caja se hace una conversión de EAN de caja a EAN de Pieza
+					zeroLoad = true;
+					this.getConversionEANCajas(this, scanGTIN, rowValue, aData);
+				}
+				this.byId("InventoryDetailsPage").scrollTo(100, 0);				
+				oDialog.close();
+			}
+			this._oBusyIndicator.close();
+		},
+		onAfterOpenScanInput: function (oEvent) {
+			var oInput = oEvent.getSource().getContent()[0];
+			oInput.setValue(""); // Limpiar el campo de input cada vez que se abre el diálogo
+			oInput.focus();
+		},
 		onScanError: function (oEvent) {
 			// debugger;
 		},
 		addExistsProduct: function (t, rowValue, scanGTIN) {
 			let oFilter = this.getView().byId("ComboFilter");
-			if ( (oFilter.getSelectedKey() === "3" && rowValue.CountQty > 0) || oFilter.getSelectedKey() === "2" && Number(rowValue.CountQty) === 0 ) {
+			if ((oFilter.getSelectedKey() === "3" && rowValue.CountQty > 0) || oFilter.getSelectedKey() === "2" && Number(rowValue.CountQty) === 0) {
 				oFilter.revertSelection();
 				this.byId("CA_LINE_ITEMS_TABLE").getBinding("items").filter(null);
 			}
-			// t._addProductToCountingActivityDetail(scanGTIN);
 			oldValue = rowValue.CountQty;
 			if (Number(oldValue) > 0) {
 				zeroLoad = false;
@@ -1430,7 +1508,8 @@ sap.ui.define([
 		disableCustomObjects: function (t, s) {
 			var f = false;
 			var o = t.getView().getModel("CAHeader").getData();
-			var sB = t.byId("sampleBarcodeScannerButton");
+			// var sB = t.byId("sampleBarcodeScannerButton");
+			var sB = t.byId("BARCODE_SCAN_BUTTON"); 
 			var cF = t.byId("ComboFilter");
 			var cI = t.byId("ITEMS_COUNTED_GENERAL");
 			var nCI = t.byId("ITEMS_NOT_COUNTED_LB");
@@ -1573,7 +1652,7 @@ sap.ui.define([
 				objPza.setShowValueStateMessage(true);
 				objPza.setValueStateText(t._utilities.getText("QTY_ERROR_MESSAGE"));
 				lvalidaNegativo = true;
-			}else{
+			} else {
 				objPza.setValueState("None");
 				objPza.setShowValueStateMessage(false);
 			};
@@ -1583,7 +1662,7 @@ sap.ui.define([
 				objCaja.setShowValueStateMessage(true);
 				objCaja.setValueStateText(t._utilities.getText("QTY_ERROR_MESSAGE"));
 				lvalidaNegativo = true;
-			}else{
+			} else {
 				objCaja.setValueState("None");
 				objCaja.setShowValueStateMessage(false);
 			};
@@ -1603,12 +1682,13 @@ sap.ui.define([
 			} else {
 				this.getConversionCajas(E, data, lvPza, lvCaja, objQTY);
 			};
-
-			this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed(); // --> Se comenta para evitar que se abra el escáner cada vez que se agrega una cantidad, se deja la función para que se pueda llamar desde un botón de escaneo personalizado
+			this.getView().byId("BARCODE_SCAN_BUTTON").firePress(); // --> VMTC: Se cambia la función del botón de escaneo para que se ejecute al agregar una cantidad, de esta forma se actualiza la tabla de productos escaneados al agregar una cantidad sin necesidad de escanear el producto nuevamente
+			// this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed(); // --> Se comenta para evitar que se abra el escáner cada vez que se agrega una cantidad, se deja la función para que se pueda llamar desde un botón de escaneo personalizado
 		},
-		_onTotalSubmit: function (oEvent) {
-			this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed();
-		},
+		// _onTotalSubmit: function (oEvent) {
+		// 	this.getView().byId("BARCODE_SCAN_BUTTON").firePress(); 
+		// 	// this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed();
+		// },
 		fillScannedTable: function (productNumber) {
 			var sServiceUrl = "/sap/opu/odata/sap/ZAPI_ZONAS_F1512";
 			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl, false);
@@ -1655,7 +1735,7 @@ sap.ui.define([
 					let v_x = "x";
 				},
 				error: function (oError) {
-					debugger;
+					// debugger;
 				}
 			});
 			oData.submitChanges({
@@ -1669,7 +1749,6 @@ sap.ui.define([
 			});
 		},
 		deleteSingleScannedProduct: function (rowValue, productNumber) {
-			// debugger;
 			var sServiceUrl = "/sap/opu/odata/sap/ZAPI_ZONAS_F1512";
 			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl);
 			var lIblnr = rowValue.CANum;
@@ -1703,6 +1782,23 @@ sap.ui.define([
 			}
 			return text;
 		},
+		// _onTestButtonPress: function () {
+
+		// 	if (!this.getOwnerComponent().getModel("sharedModel")) {
+		// 		var oSharedData = {
+		// 			globalDocument: {
+		// 				CANum: "0100000627",
+		// 			}
+		// 		};
+		// 		var oSharedModel = new sap.ui.model.json.JSONModel(oSharedData);
+		// 		this.getOwnerComponent().setModel(oSharedModel, "sharedModel");
+		// 	} else {
+		// 		var oModel = this.getOwnerComponent().getModel("sharedModel");
+		// 		oModel.oData.globalDocument.CANum = "0100000627";
+		// 		this.getOwnerComponent().setModel(oModel)
+		// 	};
+		// 	this._navigationHandler.gotoMasterPage();
+		// }
 		// ---------------------------------------------------------------------------------------------
 	});
 });

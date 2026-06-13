@@ -51,6 +51,9 @@
 				"sap.ui.controllerExtensions": {
 					"retail.store.countstocks1.controller.ActivityDetails": {
 						"controllerName": "customer.app.variant.f1512.controller.ActivityDetailsCustom"
+					},
+					"retail.store.countstocks1.controller.CountingActivities": {
+						"controllerName": "customer.app.variant.f1512.controller.CountingActivitiesCustom"
 					}
 				}
 			}
