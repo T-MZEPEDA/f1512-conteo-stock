@@ -29,6 +29,7 @@ sap.ui.define([
 	var zeroLoad = false;
 	var gFilter = [];
 	var superIndex = 0;
+	var tipoEan = ""; // Se usa para determinar si el EAN es de tipo caja o pieza, para hacer focus en el input correspondiente
 	return sap.ui.controller("customer.app.variant.f1512.controller.ActivityDetailsCustom", {
 		//    _jSONModel: J,
 		//    _device: D,
@@ -304,8 +305,15 @@ sap.ui.define([
 				};
 				t.setCounters_v2(t);
 				// VMTC: Código Custom - Se agrega para habilitar de forma automática el teclado numérico en la Hand Held, no funciona del todo bien en versión de Escritorio
-				// t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[1].getItems()[0].setValue("");
-				// t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[1].getItems()[0].focus();				
+				if (tipoEan === 'P') {
+					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].setValue("");
+					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].focus();
+				};
+				if (tipoEan === 'C') {
+					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[1].getItems()[0].setValue("");
+					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[1].getItems()[0].focus();
+				}
+				tipoEan = "";
 				// Código Custom - Fin
 			};
 			var E = function (k) {
@@ -316,7 +324,13 @@ sap.ui.define([
 				} else {
 					var m = k && k.length > 0 ? k[0] : null;
 					var s = m ? m.getMessage() : t._utilities.getText("SCANNED_PRODUCT_REJECTED");
-					t._utilities.showErrorMessageBox(s);
+					// --------------------------------------------------------
+					// VMTC: Código Custom - Se agrega para que al mostrar el error de EAN no encontrado, se abra nuevamente el dialog de escaneo
+					var openDialog = function (ok) {
+						t.openDialogBarcodeScannerOnError(t);
+					};
+					t._utilities.showErrorMessageBox(s, openDialog);
+					// ----------------------------------------------------------
 					t._oBusyIndicator.close();
 				}
 			};
@@ -1213,15 +1227,15 @@ sap.ui.define([
 			});
 			return oFilters;
 		},
-		getConversionCajas: function (E, data, valPza, qtyCaja, objQTY) {
+		getConversionCajas: function (data, valPza, qtyCaja, objQTY) {
 			var oData = this.oDataObject();
 			var oThis = this;
-			var oFilters = this.getFiltersCAProducts(data); 
+			var oFilters = this.getFiltersCAProducts(data);
 			oFilters.push(new sap.ui.model.Filter(
-					"ConversionRules",
-					sap.ui.model.FilterOperator.EQ,
-					data.GTIN
-				))
+				"ConversionRules",
+				sap.ui.model.FilterOperator.EQ,
+				data.GTIN
+			))
 			oData.read("/CAProducts",
 				{
 					async: false,
@@ -1232,25 +1246,34 @@ sap.ui.define([
 					success: function (oSuccess) {
 						oSuccess.results.forEach((producto) => {
 							if (data.ProductNumber === producto.ProductNumber) {
+								if (!producto.ConversionRules.includes("CV") && !producto.ConversionRules.includes("CJ")) {
+									// let openDialog = function (ok) {
+									// 	oThis.openDialogBarcodeScannerOnError(oThis);
+									// };
+									oThis._utilities.showErrorMessageBox("No se ha definido la unidad de medida 'CAJA' para este producto");
+									return;
+								};
 								var valCaja = 1;
-								if (producto.ConversionRules.split("|").length === 1) {
-									valCaja = 1;
-								} else {
-									producto.ConversionRules.split("|").forEach((rule => {
-										if (rule.includes("CV") || rule.includes("CJ")) {
-											valCaja = rule.split("-")[1];
-										}
-									}));									
-								}
+								// if (producto.ConversionRules.split("|").length === 1) {
+								// 	valCaja = 1;
+								// } else {
+								producto.ConversionRules.split("|").forEach((rule => {
+									if (rule.includes("CV") || rule.includes("CJ")) {
+										valCaja = rule.split("-")[1];
+									}
+								}));
+								// }
 								valCaja = Number(qtyCaja) * Number(valCaja);
 								var SumaTotal = Number(data.CountQty) + Number(valCaja) + Number(valPza);
 								objQTY.fireChange({ value: `${SumaTotal}` });
+								oThis.getView().byId("BARCODE_SCAN_BUTTON").firePress();
+								oThis.openDialogBarcodeScannerOnError(oThis);
 								if (valCaja > 0) {
 									return;
 								}
 							}
 						})
-						E.getSource().setValue("");
+						// E.getSource().setValue("");
 					},
 					error: function (oError) {
 						reject(oError);
@@ -1261,12 +1284,12 @@ sap.ui.define([
 			var data = t.getView().getModel("CAHeader").getData();
 			var oData = t.oDataObject();
 			var exitLoop = false;
-			var oFilters = t.getFiltersCAProducts(data); 
+			var oFilters = t.getFiltersCAProducts(data);
 			oFilters.push(new sap.ui.model.Filter(
-					"ConversionRules",
-					sap.ui.model.FilterOperator.EQ,
-					GTIN
-				));			
+				"ConversionRules",
+				sap.ui.model.FilterOperator.EQ,
+				GTIN
+			));
 			oData.read("/CAProducts",
 				{
 					async: false,
@@ -1286,12 +1309,15 @@ sap.ui.define([
 								if (rule.split("-")[0] === GTIN) {
 									addItem = true;
 									existsGTIN = true;
-									if (rule.split("-")[2] === "IN" && rule.split("-")[0] === GTIN) {										
+									if (rule.split("-")[2] === "IN" && rule.split("-")[0] === GTIN) {
 										t._messageBoxToast.show("No se permite EAN 'INNER' ");
 										addItem = false;
 										GTIN = null;
 										t._oBusyIndicator.close();
-									}
+									};
+									if (rule.includes("CV") || rule.includes("CJ")) {
+										tipoEan = 'C';
+									};
 									exitLoop = true;
 									return;
 								}
@@ -1411,14 +1437,20 @@ sap.ui.define([
 		},
 		onBarcodeDialogPress: function () {
 			var oView = this.getView();
+			// Se agrega para que al abrir el diálogo de escaneo se sumen las piezas a la cantidad total de piezas contadas
+			var addSource = oView.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3];
+			let result = this.addValueToTotalQty(addSource, this);
+			if (result === "Error") { // Si hay un error en la validación de la cantidad, no se abre el diálogo
+				return;
+			};
 			var oDialog = oView.byId("InputBarcodeScanDialog");
 			var oThis = this;
 			// create dialog lazily
 			if (!oDialog) {
 				// create dialog via fragment factory
-				oDialog = sap.ui.xmlfragment(oView.getId(), "customer.app.variant.f1512.view.fragments.InputBarcodeScan");				
+				oDialog = sap.ui.xmlfragment(oView.getId(), "customer.app.variant.f1512.view.fragments.InputBarcodeScan");
 				oDialog.attachAfterOpen(this.onAfterOpenScanInput, this);
-				oDialog.getContent()[0].attachLiveChange(this.onScanLiveupdate, this);				
+				oDialog.getContent()[0].attachLiveChange(this.onScanLiveupdate, this);
 				oDialog.getButtons()[0].attachPress(function (oEvent) { // Botón Aceptar
 					let lGTIN = oEvent.getSource().getParent().getContent()[0].getValue();
 					oThis.addEAN(lGTIN);
@@ -1429,9 +1461,13 @@ sap.ui.define([
 					oDialog.close();
 				});
 				oView.addDependent(oDialog);
-			}			
+			} else {
+				if (!oDialog.getContent()[0].mEventRegistry["liveChange"]) {
+					oDialog.getContent()[0].attachLiveChange(this.onScanLiveupdate, this);
+				}
+			}
 			oDialog.getContent()[0].setValue(""); // Limpiar el campo de input cada vez que se abre el diálogo			
-			oDialog.open();			
+			oDialog.open();
 		},
 		onCancelScanInput: function (oEvent) {
 			var oDialog = this.getView().byId("InputBarcodeScanDialog");
@@ -1439,9 +1475,15 @@ sap.ui.define([
 		},
 		onScanLiveupdate: function (oEvent) {
 			let lGTIN = oEvent.getParameter("value");
+			if (lGTIN.length === 1) {
+				let oDialog = this.getView().byId("InputBarcodeScanDialog");
+				oDialog.getContent()[0].detachLiveChange(this.onScanLiveupdate, this);
+				return;
+			}
 			this.addEAN(lGTIN);
 		},
 		addEAN: function (GTIN) {
+			tipoEan = "";
 			var oDialog = this.getView().byId("InputBarcodeScanDialog");
 			this._oBusyIndicator.open();
 			scanGTIN = GTIN;
@@ -1457,15 +1499,16 @@ sap.ui.define([
 				var aData = oTable.getBinding("items").oList;
 				var rowValue = aData.find(row => row.GTIN === scanGTIN)
 				if (aData.findIndex(row => row.GTIN === scanGTIN) > -1) {
+					tipoEan = 'P';
 					this.fillScannedTable(rowValue.ProductNumber);
 					this.addExistsProduct(this, rowValue, scanGTIN);
 				} else {
 					// En caso de que no exista el EAN en la lista de productos se valida que no sea un EAN 
-					// de Caja. Si es diferente de caja se hace una conversión de EAN de caja a EAN de Pieza
+					// de Caja. Si es diferente de pieza se hace una conversión de EAN de caja a EAN de Pieza
 					zeroLoad = true;
 					this.getConversionEANCajas(this, scanGTIN, rowValue, aData);
 				}
-				this.byId("InventoryDetailsPage").scrollTo(100, 0);				
+				this.byId("InventoryDetailsPage").scrollTo(100, 0);
 				oDialog.close();
 			}
 			this._oBusyIndicator.close();
@@ -1494,7 +1537,6 @@ sap.ui.define([
 			t._addProductToCountingActivityDetail(scanGTIN);
 		},
 		deleteLineItemForCountingActivityDetailCustom: function (t, a) {
-
 			var S = function (i) {
 				t.setCADLineItems(i);
 			};
@@ -1509,7 +1551,7 @@ sap.ui.define([
 			var f = false;
 			var o = t.getView().getModel("CAHeader").getData();
 			// var sB = t.byId("sampleBarcodeScannerButton");
-			var sB = t.byId("BARCODE_SCAN_BUTTON"); 
+			var sB = t.byId("BARCODE_SCAN_BUTTON");
 			var cF = t.byId("ComboFilter");
 			var cI = t.byId("ITEMS_COUNTED_GENERAL");
 			var nCI = t.byId("ITEMS_NOT_COUNTED_LB");
@@ -1625,9 +1667,16 @@ sap.ui.define([
 			// -------------------------------------------------------------
 		},
 		_onQuantitySubmit: function (E) {
-			// Se agrega este bloque de código para la funcionalidad de agregar Piezas y cajas al mismo tiempo
-			var a = this.getView().getModel("CALineItems");
-			var l = E.getSource().getParent().getParent();
+			// Se agrega este bloque de código para la funcionalidad de agregar Piezas y cajas al mismo tiempo 
+			let result = this.addValueToTotalQty(E.getSource().getParent().getParent(), this);
+			if (result === "Error" || result === "CAJA") { // Si hay un error en la validación de la cantidad, no se ejecuta el escaneo
+				return;
+			}
+			this.getView().byId("BARCODE_SCAN_BUTTON").firePress(); // --> VMTC: Se cambia la función del botón de escaneo para que se ejecute al agregar una cantidad, de esta forma se actualiza la tabla de productos escaneados al agregar una cantidad sin necesidad de escanear el producto nuevamente			
+		},
+		addValueToTotalQty: function (iSource, iThis) {
+			var a = iThis.getView().getModel("CALineItems");
+			var l = iSource;
 			var s = l.getBindingContext("CALineItems").getPath();
 			var data = a.getObject(s);
 			var lvalidaNegativo = false;
@@ -1635,22 +1684,18 @@ sap.ui.define([
 			let lvPza = "";
 			let lvCaja = "";
 			let lvActual = "";
-			let objPza = E.getSource().getParent().getParent().getItems()[0].getItems()[0];
-			let objCaja = E.getSource().getParent().getParent().getItems()[1].getItems()[0];
-			let objQTY = E.getSource().getParent().getParent().getParent().getItems()[0];
-			if (E.getSource().sId.includes("PZA_INPUT")) {
-				lvPza = E.getSource()._lastValue;
-				lvCaja = objCaja.getValue();
-			}
-			if (E.getSource().sId.includes("CAJA_INPUT")) {
-				lvPza = objPza.getValue();
-				lvCaja = E.getSource()._lastValue;
-			}
+			let objPza = l.getItems()[0].getItems()[0];
+			let objCaja = l.getItems()[1].getItems()[0];
+			let objQTY = l.getParent().getItems()[0];
+
+			lvPza = objPza.getValue();
+			lvCaja = objCaja.getValue();
+
 			// Validar que los montos ingresados no sean negativos
 			if (Number(lvPza) < 0) {
 				objPza.setValueState("Error");
 				objPza.setShowValueStateMessage(true);
-				objPza.setValueStateText(t._utilities.getText("QTY_ERROR_MESSAGE"));
+				objPza.setValueStateText(iThis._utilities.getText("QTY_ERROR_MESSAGE"));
 				lvalidaNegativo = true;
 			} else {
 				objPza.setValueState("None");
@@ -1660,7 +1705,7 @@ sap.ui.define([
 			if (Number(lvCaja) < 0) {
 				objCaja.setValueState("Error");
 				objCaja.setShowValueStateMessage(true);
-				objCaja.setValueStateText(t._utilities.getText("QTY_ERROR_MESSAGE"));
+				objCaja.setValueStateText(iThis._utilities.getText("QTY_ERROR_MESSAGE"));
 				lvalidaNegativo = true;
 			} else {
 				objCaja.setValueState("None");
@@ -1669,7 +1714,7 @@ sap.ui.define([
 
 			if (lvalidaNegativo === true) {
 				lvalidaNegativo = false;
-				return;
+				return "Error";
 			};
 
 			objCaja.setValue("");
@@ -1678,17 +1723,12 @@ sap.ui.define([
 
 			if (lvCaja === "") {
 				var SumaTotal = Number(lvPza) + Number(lvActual);
-				objQTY.fireChange({ value: `${SumaTotal}` });
+				objQTY.fireChange({ value: `${SumaTotal}` });				
 			} else {
-				this.getConversionCajas(E, data, lvPza, lvCaja, objQTY);
+				iThis.getConversionCajas(data, lvPza, lvCaja, objQTY);
+				return "CAJA";
 			};
-			this.getView().byId("BARCODE_SCAN_BUTTON").firePress(); // --> VMTC: Se cambia la función del botón de escaneo para que se ejecute al agregar una cantidad, de esta forma se actualiza la tabla de productos escaneados al agregar una cantidad sin necesidad de escanear el producto nuevamente
-			// this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed(); // --> Se comenta para evitar que se abra el escáner cada vez que se agrega una cantidad, se deja la función para que se pueda llamar desde un botón de escaneo personalizado
 		},
-		// _onTotalSubmit: function (oEvent) {
-		// 	this.getView().byId("BARCODE_SCAN_BUTTON").firePress(); 
-		// 	// this.getView().byId("sampleBarcodeScannerButton")._onBtnPressed();
-		// },
 		fillScannedTable: function (productNumber) {
 			var sServiceUrl = "/sap/opu/odata/sap/ZAPI_ZONAS_F1512";
 			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl, false);
@@ -1781,6 +1821,9 @@ sap.ui.define([
 				text = `Total ${CountUoM}`;
 			}
 			return text;
+		},
+		openDialogBarcodeScannerOnError: function (t) {
+			t.getView().byId("BARCODE_SCAN_BUTTON").firePress();
 		},
 		// _onTestButtonPress: function () {
 
