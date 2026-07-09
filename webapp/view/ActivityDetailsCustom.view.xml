@@ -103,7 +103,8 @@
                 mode="{parts:[{path: 'CADetails>/CountByZone'}],formatter:'._formatter.formatCALineItemsTableDeletionMode'}"
                 items="{path:'CALineItems>/'}"
                 growing="true"
-                growingThreshold="10"                
+                growingThreshold="10"      
+                updateFinished="onTableUpdateFinished"
                 sticky="ColumnHeaders,HeaderToolbar,InfoToolbar"
             >
             <headerToolbar>
@@ -172,7 +173,7 @@
                                     type="Number"
                                     change="_onQuantityChange"
                                     visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
-                                    enabled="{parts:[{path:'CAHeader>/InStoreStatus'}], formatter:'._formatter.isProductLineItemQtyInputEnabled'}"
+                                    enabled="{parts:[{path:'CAHeader>/InStoreStatus'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}], formatter:'.isProductLineItemQtyInputEnabledCustom'}"
                                     width="3.5rem"
                                 />
                                 <Text
@@ -199,7 +200,7 @@
                                             type="Number"                                            
                                             submit="_onQuantitySubmit"
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
-                                            enabled="{parts:[{path:'CAHeader>/InStoreStatus'}], formatter:'._formatter.isProductLineItemQtyInputEnabled'}"
+                                            enabled="{parts:[{path:'CAHeader>/InStoreStatus'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}], formatter:'.isProductLineItemQtyInputEnabledCustom'}"
                                             width="3.5rem"
                                         />
                                         <Text
@@ -214,14 +215,15 @@
                                     </VBox>
                                     <!-- Código Custom: Se agrega input box de PZA - Fin -->
                                     <!-- Código Custom: Se agrega input box de Caja - Inicio -->
-                                    <VBox id="CAJA_COL_VL">
+                                    <VBox id="CAJA_COL_VL" 
+                                          class="sapUiTinyMarginEnd">
                                         <Input
                                             id="CAJA_INPUT"
                                             value=""
                                             type="Number"
                                             submit="_onQuantitySubmit"                                            
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
-                                            enabled="{parts:[{path:'CAHeader>/InStoreStatus'}], formatter:'._formatter.isProductLineItemQtyInputEnabled'}"
+                                            enabled="{parts:[{path:'CAHeader>/InStoreStatus'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}], formatter:'.isProductLineItemQtyInputEnabledCustom'}"
                                             width="3.5rem"
                                         />
                                         <Text
