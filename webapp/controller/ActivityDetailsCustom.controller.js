@@ -1283,7 +1283,7 @@ sap.ui.define([
 					}
 				});
 		},
-		getConversionEANCajas: function (t, GTIN, rowValue, aData) {
+		getConversionEANCajas: function (t, GTIN, rowValue, aData, iRecount) {
 			var data = t.getView().getModel("CAHeader").getData();
 			var oData = t.oDataObject();
 			var exitLoop = false;
@@ -1330,8 +1330,18 @@ sap.ui.define([
 								if (!rowValue) {
 									existsGTIN = true;
 									rowValue = aData.find(row => row.ProductNumber === producto.ProductNumber);
-									t.fillScannedTable(rowValue.ProductNumber);
-									t.addExistsProduct(t, rowValue, valGTIN);
+									if (iRecount === true) {
+										if (rowValue) {
+											t.manageItemNav(valGTIN, t);
+										} else {
+											t.getView().byId("InputBarcodeScanDialog").close();
+											var s = t._utilities.getText("SCANNED_PRODUCT_REJECTED");
+											t._utilities.showErrorMessageBox(s);
+										};
+									} else {
+										t.fillScannedTable(rowValue.ProductNumber);
+										t.addExistsProduct(t, rowValue, valGTIN);
+									}
 								} else {
 									existsGTIN = true;
 									t._addProductToCountingActivityDetail(valGTIN);
@@ -1396,16 +1406,35 @@ sap.ui.define([
 			var sQuery = this.byId("CA_LINE_ITEMS_TABLE");
 		},
 		_onComboBoxSelectionChange: function (oEvent) {
+			debugger;
 			var oFilter = [];
 			var oTable = this.byId("CA_LINE_ITEMS_TABLE");
+			var o = this.getView().getModel("CAHeader").getData();
+			if (o.CAType === '1') {
+				var activeIndex = oTable.getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
+				var oItem = oTable.getItems()[activeIndex];
+				var valueQty = oItem.getCells()[1].getItems()[0].getValue();
+			};
+
 			switch (oEvent.getSource().getSelectedKey()) {
 				case '1': // Todos los registros
+					if (o.CAType === '1') {
+						this.enableDisableItems(oItem, false);						
+					};
 					oFilter = null;
 					break;
 				case '2': // Contados
+					if (o.CAType === '1' && Number(valueQty) === 0) {
+						this.enableDisableItems(oItem, false);			
+					};
 					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.GT, 0));
 					break;
 				case '3': // No contados
+					if (o.CAType === '1' && Number(valueQty) > 0) {
+						oItem.getCells()[1].getItems()[0].setEnabled(false);
+						oItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0].setEnabled(false);
+						oItem.getCells()[1].getItems()[3].getItems()[1].getItems()[0].setEnabled(false);
+					};
 					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.EQ, 0));
 					break;
 				default:
@@ -1530,17 +1559,24 @@ sap.ui.define([
 			};
 
 			if (o.CAType === "1") {
+				let oFilter = this.getView().byId("ComboFilter");
+				oFilter.revertSelection();
 				var oTable = iThis.getView().byId("CA_LINE_ITEMS_TABLE");
 				var aData = oTable.getBinding("items").oList;
 				indexItem = aData.findIndex(row => row.GTIN === iGTIN);
+				oTable.getBinding("items").filter(null);
+
+				// En caso de que no exista el EAN en la lista de productos se valida que no sea un EAN de Caja. Si es diferente de pieza se hace una conversión de EAN de caja a EAN de Pieza
+				if (indexItem === -1) {
+					iThis.getConversionEANCajas(iThis, iGTIN, null, aData, true);
+					return;
+				};
 				var tableItems = oTable.getItems();
 				// Desactivar Inputs
 				var activeIndex = tableItems.findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
 				var activeItem = tableItems[activeIndex];
 				if (activeItem) {
-					activeItem.getCells()[1].getItems()[0].setEnabled(false);
-					activeItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0].setEnabled(false);
-					activeItem.getCells()[1].getItems()[3].getItems()[1].getItems()[0].setEnabled(false);
+					this.enableDisableItems(activeItem, false);					
 				};
 				oDialog.close();
 				if (indexItem >= tableItems.length) {
@@ -1559,14 +1595,32 @@ sap.ui.define([
 		manageInputsOnRecount: function (iTable) {
 			var oItem = iTable.getItems()[indexItem];
 			iTable.setSelectedItem(oItem, true);
-			iTable.scrollToIndex(indexItem);
-			oItem.getCells()[1].getItems()[0].setEnabled(true);
-			oItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0].setEnabled(true);
-			oItem.getCells()[1].getItems()[3].getItems()[1].getItems()[0].setEnabled(true);
-			setTimeout(() => { oItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0].focus(); }, 400);
+			iTable.scrollToIndex(indexItem);			
+			this.enableDisableItems(oItem, true);
+			setTimeout(() => {
+				if (tipoEan === 'C') {
+					oItem.getCells()[1].getItems()[3].getItems()[1].getItems()[0].focus();
+				}
+				else {
+					oItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0].focus();
+				}
+				tipoEan = "";
+			}, 400);
 			iTable.setGrowingScrollToLoad(false);
 			iTable.setGrowingThreshold(10);
 			indexItem = -1;
+		},
+		enableDisableItems:function (iItem, iValue) {			
+			iItem.getCells()[1].getItems()[1].setVisible(!iValue);
+			iItem.getCells()[1].getItems()[0].setVisible(iValue);
+			iItem.getCells()[1].getItems()[3].getItems()[0].getItems()[1].setVisible(!iValue);
+			iItem.getCells()[1].getItems()[3].getItems()[1].getItems()[1].setVisible(!iValue);
+			iItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0].setVisible(iValue);
+			iItem.getCells()[1].getItems()[3].getItems()[1].getItems()[0].setVisible(iValue);
+
+			iItem.getCells()[1].getItems()[0].setEnabled(iValue);
+			iItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0].setEnabled(iValue);
+			iItem.getCells()[1].getItems()[3].getItems()[1].getItems()[0].setEnabled(iValue);
 		},
 		onAfterOpenScanInput: function (oEvent) {
 			var oInput = oEvent.getSource().getContent()[0];
@@ -1870,11 +1924,11 @@ sap.ui.define([
 		},
 		formatTextBaseUOM: function (iCAType, CountUoM) {
 			let text = "";
-			if (iCAType === '1') {
-				text = `${CountUoM}`;
-			} else {
-				text = `Total ${CountUoM}`;
-			}
+			// if (iCAType === '1') {
+			// 	text = `${CountUoM}`;
+			// } else {
+			text = `Total ${CountUoM}`;
+			// }
 			return text;
 		},
 		openDialogBarcodeScannerOnError: function (t) {
@@ -1897,21 +1951,23 @@ sap.ui.define([
 		// 	};
 		// 	this._navigationHandler.gotoMasterPage();
 		// }
-		// ---------------------------------------------------------------------------------------------
+		// ---------------------------------------------------------------------------------------------		
 		onTableUpdateFinished: function (oEvent) {
-			if (oEvent.mParameters.reason === 'Growing' && indexItem > -1) {
-				var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
+			var o = this.getView().getModel("CAHeader").getData();
+			var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
+			if (oEvent.mParameters.reason === 'Growing' && indexItem > -1 && o.CAType === '1') {
 				this.manageInputsOnRecount(oTable);
 			};
-		},
-		isProductLineItemQtyInputEnabledCustom: function (sCAStatus, sCALineNum, aCALineItems) {
-			if (sCAStatus === "1") {
-				return this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
-			} else {
-				return !(sCAStatus === "3");
-			}
-		},
+			if (oEvent.mParameters.reason === 'Filter' && o.CAType === '1') {
+				var activeIndex = oTable.getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
+				if (activeIndex === -1) {
+					activeIndex = 0;
+					var oItem = oTable.getItems()[activeIndex];
+					this.enableDisableItems(oItem, true);		
+				};
 
+			};
+		},
 		createCountingActivityDetailAndLineItemsCustom: function (o, f, e, iSort) {
 			var t = this._context;
 			var g = function (a) {
@@ -1998,7 +2054,56 @@ sap.ui.define([
 					reject(oError);
 				}
 			});
-		}
+		},
+
+		isProductLineItemQtyInputEnabledCustom: function (sCAStatus, sCALineNum, aCALineItems) {
+			if (sCAStatus === "1") {
+				return this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
+			} else {
+				return !(sCAStatus === "3");
+			}
+		},
+		isVisibleCountInputFieldCustom: function (sCountByZoneFlag, sCALineNum, aCALineItems) {
+			var bIsVisibleCountInputField = true;
+
+			// Count by Zone      
+			if (sCountByZoneFlag === "X") {
+				// CA line item is the first one
+				bIsVisibleCountInputField = this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
+				return bIsVisibleCountInputField;
+			} else if (aCALineItems[0].CAType === "1") {
+				bIsVisibleCountInputField = this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
+				return bIsVisibleCountInputField;
+			}
+			else {
+				// Count by Product
+				return bIsVisibleCountInputField;
+			}
+		},
+		isVisibleCountTextFieldCustom: function (sCountByZoneFlag, sCALineNum, aCALineItems) {
+			var bIsVisibleCountTextField = false;
+
+			// Count by Product
+			if (sCountByZoneFlag === "") {
+				if (aCALineItems[0].CAType === "1") {
+					return !this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
+				} else {
+					return bIsVisibleCountTextField;
+				}
+				// Count by Zone      
+			} else if (sCountByZoneFlag === "X") {
+				// CA line item is not the first one
+				bIsVisibleCountTextField = !this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
+				return bIsVisibleCountTextField;
+			}
+		},
+		formatCountQtyCustom: function (sCountQty, aCALineItems) {
+			if (aCALineItems === "1" && sCountQty === "") {
+				return "0";
+			} else {
+				return sCountQty;
+			};
+		},
 		// ---------------------------------------------------------------------------------------------
 	});
 });

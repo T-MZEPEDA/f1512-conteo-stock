@@ -172,14 +172,14 @@
                                     value="{CALineItems>CountQty}"
                                     type="Number"
                                     change="_onQuantityChange"
-                                    visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
+                                    visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'.isVisibleCountInputFieldCustom'}"
                                     enabled="{parts:[{path:'CAHeader>/InStoreStatus'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}], formatter:'.isProductLineItemQtyInputEnabledCustom'}"
                                     width="3.5rem"
                                 />
                                 <Text
                                     id="QTY_TXT"
-                                    text="{CALineItems>CountQty}"
-                                    visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountTextField'}"
+                                    text="{parts:[{path: 'CALineItems>CountQty'},{path: 'CALineItems>CAType'}],formatter:'.formatCountQtyCustom'}"
+                                    visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'.isVisibleCountTextFieldCustom'}"
                                 />
                                 <Text
                                     id="BASE_UOM_TXT"
@@ -199,14 +199,14 @@
                                             value=""
                                             type="Number"                                            
                                             submit="_onQuantitySubmit"
-                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
+                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'.isVisibleCountInputFieldCustom'}"
                                             enabled="{parts:[{path:'CAHeader>/InStoreStatus'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}], formatter:'.isProductLineItemQtyInputEnabledCustom'}"
                                             width="3.5rem"
                                         />
                                         <Text
                                             id="PZA_TXT"
                                             text="0"
-                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountTextField'}"
+                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'.isVisibleCountTextFieldCustom'}"
                                         />
                                         <Text
                                             id="PZA_UOM_TXT"
@@ -222,14 +222,14 @@
                                             value=""
                                             type="Number"
                                             submit="_onQuantitySubmit"                                            
-                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountInputField'}"
+                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'.isVisibleCountInputFieldCustom'}"
                                             enabled="{parts:[{path:'CAHeader>/InStoreStatus'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}], formatter:'.isProductLineItemQtyInputEnabledCustom'}"
                                             width="3.5rem"
                                         />
                                         <Text
                                             id="CAJA_TXT"
                                             text="0"
-                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'._formatter.isVisibleCountTextField'}"
+                                            visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'.isVisibleCountTextFieldCustom'}"
                                         />
                                         <Text
                                             id="CAJA_UOM_TXT"
