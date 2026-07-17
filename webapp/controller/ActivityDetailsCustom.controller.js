@@ -154,6 +154,12 @@ sap.ui.define([
 							this.byId("InventoryDetailsPage").scrollTo(0, 0);
 							this.setCounters_v2(this);
 						} else {
+							// ------------------------------------------------------------------
+							// VMTC: Código Custom - Se agrega para evitar un error cuándo se filtra la tabla y hay diferencias entre la cantidad de registros filtrados y la cantidad de registros en el modelo
+							if (this.byId("CA_LINE_ITEMS_TABLE").getItems().length < i) {
+								i = 0;
+							};
+							// ------------------------------------------------------------------
 							var p = l.getItems()[i].sId;
 							l.setSelectedItemById(p, true);
 							this._scrollToSelectedItem();
@@ -306,15 +312,17 @@ sap.ui.define([
 				};
 				t.setCounters_v2(t);
 				// VMTC: Código Custom - Se agrega para habilitar de forma automática el teclado numérico en la Hand Held, no funciona del todo bien en versión de Escritorio
-				if (tipoEan === 'P') {
-					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].setValue("");
-					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].focus();
-				};
-				if (tipoEan === 'C') {
-					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[1].getItems()[0].setValue("");
-					t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[1].getItems()[0].focus();
-				}
-				tipoEan = "";
+				setTimeout(() => {
+					if (tipoEan === 'P') {
+						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].setValue("");
+						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].focus();
+					};
+					if (tipoEan === 'C') {
+						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[1].getItems()[0].setValue("");
+						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[1].getItems()[0].focus();
+					}
+					tipoEan = ""
+				}, 400);
 				// Código Custom - Fin
 			};
 			var E = function (k) {
@@ -816,7 +824,7 @@ sap.ui.define([
 			o.setVisible(false); // VMTC: Se agrega para esconder el botón de escaneo estándar
 			this._updateButtons();
 			// --------------------- Código Custom - VMTC: Se agrega para esconder botones antes del inicio del conteo - Inicio ------
-			// this.disableCustomObjects(this, s);
+			this.disableCustomObjects(this, s);
 			// ----------------------------------- Fin
 		},
 		// hideAllButtons: function () {
@@ -882,13 +890,19 @@ sap.ui.define([
 					actions: [t._messageBox.Action.OK, t._messageBox.Action.CANCEL],
 					onClose: function (sAction) {
 						if (sAction === "OK") {
-							t._submitCADetailCustom();
+							debugger;
+							var o = t.getView().getModel("CAHeader").getData();
+							if (o.CAType === '1') {
+								t.getValidacionEscaneadosRecuento(o);
+							} else {
+								t._submitCADetailCustom(false);
+							}
 						}
 					},
 					dependentOn: null
 				});
 			} else {
-				t._submitCADetailCustom();
+				t._submitCADetailCustom(false);
 			};
 			// ----------------------------------- Fin
 		},
@@ -1406,7 +1420,6 @@ sap.ui.define([
 			var sQuery = this.byId("CA_LINE_ITEMS_TABLE");
 		},
 		_onComboBoxSelectionChange: function (oEvent) {
-			debugger;
 			var oFilter = [];
 			var oTable = this.byId("CA_LINE_ITEMS_TABLE");
 			var o = this.getView().getModel("CAHeader").getData();
@@ -1419,13 +1432,13 @@ sap.ui.define([
 			switch (oEvent.getSource().getSelectedKey()) {
 				case '1': // Todos los registros
 					if (o.CAType === '1') {
-						this.enableDisableItems(oItem, false);						
+						this.enableDisableItems(oItem, false);
 					};
 					oFilter = null;
 					break;
 				case '2': // Contados
 					if (o.CAType === '1' && Number(valueQty) === 0) {
-						this.enableDisableItems(oItem, false);			
+						this.enableDisableItems(oItem, false);
 					};
 					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.GT, 0));
 					break;
@@ -1469,10 +1482,17 @@ sap.ui.define([
 		},
 		onBarcodeDialogPress: function () {
 			var oView = this.getView();
+			var o = this.getView().getModel("CAHeader").getData();
+			var activeIndex = 0;
 			// Se agrega para que al abrir el diálogo de escaneo se sumen las piezas a la cantidad total de piezas contadas
-			var activeIndex = oView.byId("CA_LINE_ITEMS_TABLE").getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
-			var addSource = oView.byId("CA_LINE_ITEMS_TABLE").getItems()[activeIndex].getCells()[1].getItems()[3];
-			let result = this.addValueToTotalQty(addSource, this);
+			if (o.CAType === '1') {
+				activeIndex = oView.byId("CA_LINE_ITEMS_TABLE").getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
+			} else { activeIndex = 0; };
+			if (activeIndex > 0) {
+				var addSource = oView.byId("CA_LINE_ITEMS_TABLE").getItems()[activeIndex].getCells()[1].getItems()[3];
+				var result = this.addValueToTotalQty(addSource, this);
+			};
+
 			if (result === "Error") { // Si hay un error en la validación de la cantidad, no se abre el diálogo
 				return;
 			};
@@ -1486,7 +1506,11 @@ sap.ui.define([
 				oDialog.getContent()[0].attachLiveChange(this.onScanLiveupdate, this);
 				oDialog.getButtons()[0].attachPress(function (oEvent) { // Botón Aceptar
 					let lGTIN = oEvent.getSource().getParent().getContent()[0].getValue();
-					oThis.manageItemNav(lGTIN, oThis);
+					if (lGTIN.length > 1) {
+						oThis.manageItemNav(lGTIN, oThis);
+					} else {
+						oDialog.close();
+					};
 				});
 
 				oDialog.getButtons()[1].attachPress(function (oEvent) { // Botón Cancelar
@@ -1576,13 +1600,16 @@ sap.ui.define([
 				var activeIndex = tableItems.findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
 				var activeItem = tableItems[activeIndex];
 				if (activeItem) {
-					this.enableDisableItems(activeItem, false);					
+					this.enableDisableItems(activeItem, false);
 				};
 				oDialog.close();
+				this.fillScannedTable(aData[indexItem].ProductNumber);
 				if (indexItem >= tableItems.length) {
-					iThis.getView().byId("CA_LINE_ITEMS_TABLE").setGrowingThreshold(indexItem);
-					iThis.getView().byId("CA_LINE_ITEMS_TABLE").setGrowingScrollToLoad(true);
-					iThis.getView().byId("CA_LINE_ITEMS_TABLE").scrollToIndex(indexItem)
+					oTable.setGrowingThreshold(indexItem);
+					oTable.setGrowingScrollToLoad(true);
+					this.byId("InventoryDetailsPage").scrollTo(indexItem, 0);
+					oTable.scrollToIndex(indexItem);
+					oTable.updateItems();
 				} else {
 					iThis.manageInputsOnRecount(oTable);
 				};
@@ -1593,9 +1620,16 @@ sap.ui.define([
 			};
 		},
 		manageInputsOnRecount: function (iTable) {
-			var oItem = iTable.getItems()[indexItem];
+			// Desactivar Inputs
+			var tableItems = iTable.getItems();
+			var activeIndex = tableItems.findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
+			var activeItem = tableItems[activeIndex];
+			if (activeItem) {
+				this.enableDisableItems(activeItem, false);
+			};
+			var oItem = tableItems[indexItem];
 			iTable.setSelectedItem(oItem, true);
-			iTable.scrollToIndex(indexItem);			
+			iTable.scrollToIndex(indexItem);
 			this.enableDisableItems(oItem, true);
 			setTimeout(() => {
 				if (tipoEan === 'C') {
@@ -1605,12 +1639,14 @@ sap.ui.define([
 					oItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0].focus();
 				}
 				tipoEan = "";
+				// iTable.scrollToIndex(indexItem);
+
 			}, 400);
 			iTable.setGrowingScrollToLoad(false);
 			iTable.setGrowingThreshold(10);
 			indexItem = -1;
 		},
-		enableDisableItems:function (iItem, iValue) {			
+		enableDisableItems: function (iItem, iValue) {
 			iItem.getCells()[1].getItems()[1].setVisible(!iValue);
 			iItem.getCells()[1].getItems()[0].setVisible(iValue);
 			iItem.getCells()[1].getItems()[3].getItems()[0].getItems()[1].setVisible(!iValue);
@@ -1666,113 +1702,117 @@ sap.ui.define([
 			var nCI = t.byId("ITEMS_NOT_COUNTED_LB");
 			var iB = t.byId("inputBoxes");
 			var tBaseUOM = t.byId("BASE_UOM_TXT");
-			if (o.CAType === "1" || o.CACountStatus === "X") {
+			if (o.CACountStatus === "X") {
 				sB.setVisible(f);
-				// cF.setVisible(f);
-				// cI.setVisible(f);
-				// nCI.setVisible(f);
-				// iB.setVisible(f);
+				cF.setVisible(f);
+				cI.setVisible(f);
+				nCI.setVisible(f);
+				iB.setVisible(f);
 			} else {
 				sB.setVisible(!s);
-				// cF.setVisible(!s);
-				// cI.setVisible(!s);
-				// nCI.setVisible(!s);
-				// iB.setVisible(!s);
+				cF.setVisible(!s);
+				cI.setVisible(!s);
+				nCI.setVisible(!s);
+				iB.setVisible(!s);
 			}
 			t.byId("ComboFilter").setValue("");
 			// this.byId("ComboFilter").revertSelection();
 		},
-		_submitCADetailCustom: function () {
+		_submitCADetailCustom: function (iReconteo) {
+			// el parámetro iReconteo se agrega para identificar si es un reconteo o no. Cuándo es reconteo se omite la validación de artículos no contados, ya que en un reconteo es posible que existan artículos con cantidad cero.
 			// -------------------------------------------------------------
 			// Este es el bloque de código original, se movió a ésta función para agregar la validación de artículos no contados
 			// Éste bloque de código estaba en la función _submitCADetail
 			var i = this._isValidQuantities();
-			if (!i) {
+			// if (!i) { // VMTC - Original - 15.07.2026
+			if (!i && !iReconteo) {
 				var m = U.getText("VALIDATION_ERROR_MESSAGE");
 				sap.m.MessageBox.error(m);
-			} else {
-				var t = this;
-				var v = this.getView();
-				var s = this._utilities.getText("SUBMIT_COUNT_CONFIRM_QUESTION_PART1") + "\n\n" + this._utilities.getText("SUBMIT_COUNT_CONFIRM_QUESTION_PART2");
-				var S = function () {
-					t._oBusyIndicator.close();
-					t._messageBoxToast.show(t._utilities.getText("SUBMIT_COUNT_SUCCESS_MESSAGE"));
-					var o = t.getView().getModel("CAHeader").getData();
-					t.resetCADetailsModel();
-					t.resetCADLineItems();
-					t.loadCAHeader(o.CANum, o.CAType, o.InStoreRecountKey, o.StorageLocationID);
-					var a = o.CountByZone;
-					if (a !== "X") {
-						// if (this._device.system.phone) { // Original --> Se comenta para habilitar navegación a la página de resumen en dispositivos móviles en Hand Held
-						if (this._device.system.phone || this._device.system.tablet) {
-							t._navigationHandler.gotoMasterPage();
-						}
+				return;
+			};
+			// } else { // VMTC - Original - 15.07.2026
+			var t = this;
+			var v = this.getView();
+			var s = this._utilities.getText("SUBMIT_COUNT_CONFIRM_QUESTION_PART1") + "\n\n" + this._utilities.getText("SUBMIT_COUNT_CONFIRM_QUESTION_PART2");
+			var S = function () {
+				t._oBusyIndicator.close();
+				t._messageBoxToast.show(t._utilities.getText("SUBMIT_COUNT_SUCCESS_MESSAGE"));
+				var o = t.getView().getModel("CAHeader").getData();
+				t.resetCADetailsModel();
+				t.resetCADLineItems();
+				t.loadCAHeader(o.CANum, o.CAType, o.InStoreRecountKey, o.StorageLocationID);
+				var a = o.CountByZone;
+				if (a !== "X") {
+					// if (this._device.system.phone) { // Original --> Se comenta para habilitar navegación a la página de resumen en dispositivos móviles en Hand Held
+					if (this._device.system.phone || this._device.system.tablet) {
+						t._navigationHandler.gotoMasterPage();
 					}
-					t._utilities.getEventBus().publish("retail.store.countstocks1.ReloadMasterList", "CountingActivityHeaderReloadMasterList");
-				};
-				var E = function (a) {
-					var o = a && a.length > 0 ? a[0] : null;
-					var b = t._utilities.getText("SUBMIT_COUNT_FAILURE_MESSAGE");
-					var T = o ? o.getMessage() : b;
-					t._log.error(T);
-					t._oBusyIndicator.close();
-					t._utilities.showErrorMessageBox(b);
-				};
-				this._messageBox.show(s, this._messageBox.Icon.QUESTION, this._utilities.getText("SUBMIT_COUNT_CONFIRMATION_MESSAGEBOX_TITLE"), [
-					this._messageBox.Action.OK,
-					this._messageBox.Action.CANCEL
-				], jQuery.proxy(function (A) {
-					if (A) {
-						sap.ui.getCore().getEventBus().publish("nav", "back");
-					}
-					if (t._messageBox.Action.OK === A) {
-						var o = v.getModel("CADetails").oData;
-						var O = function (j, k) {
-							var l = [];
-							var u = j.filter(function (a) {
-								var b = l.indexOf(a.ProductNumber) === -1;
-								if (b) {
-									l.push(a.ProductNumber);
-								}
-								return b;
-							});
-							u.sort(function (a, b) {
-								if (a.ProductNumber < b.ProductNumber) {
-									return -1;
-								}
-								if (a.ProductNumber > b.ProductNumber) {
-									return 1;
-								}
-								return 0;
-							});
-							if (!t._oSubmitConfirmationDialog) {
-								t._oSubmitConfirmationDialog = sap.ui.xmlfragment("ProductSubmitConfirmationDialog", "retail.store.countstocks1.view.fragments.ProductSubmitConfirmationDialog", t);
-								t.getView().addDependent(t._oSubmitConfirmationDialog);
-								t._oSubmitConfirmationDialog.addButton(new sap.m.Button({
-									text: "{i18n>CA_LINE_ITEM_ERROR_CONFIRM_SUBMIT}",
-									press: function () {
-										k();
-										t._oSubmitConfirmationDialog.close();
-									}.bind(this)
-								}));
-								t._oSubmitConfirmationDialog.addButton(new sap.m.Button({
-									text: "{i18n>DIALOG_Cancel_BUTTON}",
-									press: function () {
-										t._oBusyIndicator.close();
-										t._oSubmitConfirmationDialog.close();
-									}.bind(this)
-								}));
-								t._oSubmitConfirmationDialog.setModel(t.getOwnerComponent().getModel("i18n"), "i18n");
-								t._oSubmitConfirmationDialog.setModel(new J());
+				}
+				t._utilities.getEventBus().publish("retail.store.countstocks1.ReloadMasterList", "CountingActivityHeaderReloadMasterList");
+			};
+			var E = function (a) {
+				var o = a && a.length > 0 ? a[0] : null;
+				var b = t._utilities.getText("SUBMIT_COUNT_FAILURE_MESSAGE");
+				var T = o ? o.getMessage() : b;
+				t._log.error(T);
+				t._oBusyIndicator.close();
+				t._utilities.showErrorMessageBox(b);
+			};
+			this._messageBox.show(s, this._messageBox.Icon.QUESTION, this._utilities.getText("SUBMIT_COUNT_CONFIRMATION_MESSAGEBOX_TITLE"), [
+				this._messageBox.Action.OK,
+				this._messageBox.Action.CANCEL
+			], jQuery.proxy(function (A) {
+				if (A) {
+					sap.ui.getCore().getEventBus().publish("nav", "back");
+				}
+				if (t._messageBox.Action.OK === A) {
+					var o = v.getModel("CADetails").oData;
+					var O = function (j, k) {
+						var l = [];
+						var u = j.filter(function (a) {
+							var b = l.indexOf(a.ProductNumber) === -1;
+							if (b) {
+								l.push(a.ProductNumber);
 							}
-							t._oSubmitConfirmationDialog.getModel().setData(u);
-							t._oSubmitConfirmationDialog.open();
-						};
-						t._oBusyIndicator.open();
-						t._context.submitCountingActivityDetail(o, S, E, O);
-					}
-				}, this));
-			}
+							return b;
+						});
+						u.sort(function (a, b) {
+							if (a.ProductNumber < b.ProductNumber) {
+								return -1;
+							}
+							if (a.ProductNumber > b.ProductNumber) {
+								return 1;
+							}
+							return 0;
+						});
+						if (!t._oSubmitConfirmationDialog) {
+							t._oSubmitConfirmationDialog = sap.ui.xmlfragment("ProductSubmitConfirmationDialog", "retail.store.countstocks1.view.fragments.ProductSubmitConfirmationDialog", t);
+							t.getView().addDependent(t._oSubmitConfirmationDialog);
+							t._oSubmitConfirmationDialog.addButton(new sap.m.Button({
+								text: "{i18n>CA_LINE_ITEM_ERROR_CONFIRM_SUBMIT}",
+								press: function () {
+									k();
+									t._oSubmitConfirmationDialog.close();
+								}.bind(this)
+							}));
+							t._oSubmitConfirmationDialog.addButton(new sap.m.Button({
+								text: "{i18n>DIALOG_Cancel_BUTTON}",
+								press: function () {
+									t._oBusyIndicator.close();
+									t._oSubmitConfirmationDialog.close();
+								}.bind(this)
+							}));
+							t._oSubmitConfirmationDialog.setModel(t.getOwnerComponent().getModel("i18n"), "i18n");
+							t._oSubmitConfirmationDialog.setModel(new J());
+						}
+						t._oSubmitConfirmationDialog.getModel().setData(u);
+						t._oSubmitConfirmationDialog.open();
+					};
+					t._oBusyIndicator.open();
+					t._context.submitCountingActivityDetail(o, S, E, O);
+				}
+			}, this));
+			// } // VMTC - Original - 15.07.2026
 			// -------------------------------------------------------------
 		},
 		_onQuantitySubmit: function (E) {
@@ -1831,8 +1871,10 @@ sap.ui.define([
 			lvActual = Number(data.CountQty);
 
 			if (lvCaja === "") {
-				var SumaTotal = Number(lvPza) + Number(lvActual);
-				objQTY.fireChange({ value: `${SumaTotal}` });
+				if (Number(lvPza) > 0) {
+					var SumaTotal = Number(lvPza) + Number(lvActual);
+					objQTY.fireChange({ value: `${SumaTotal}` });
+				};
 			} else {
 				iThis.getConversionCajas(data, lvPza, lvCaja, objQTY);
 				return "CAJA";
@@ -1842,6 +1884,7 @@ sap.ui.define([
 			var sServiceUrl = "/sap/opu/odata/sap/ZAPI_ZONAS_F1512";
 			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl, false);
 			var rowValue = this.getView().getModel("CADetails").oData;
+			// oData.setDeferredGroups(["paginationGroup"]);
 			var mParameters = {
 				groupId: "paginationGroup",
 				success: function (oSuccess) {
@@ -1878,6 +1921,7 @@ sap.ui.define([
 			var lGjahr = rowValue.ReferencedPIDocs.split("-")[1];
 			var lZone = rowValue.ZoneNumber.replaceAll(" ", "%20");
 			var sPath = `/DeleteEscaneadosSet(Iblnr='${lIblnr}',Gjahr='${lGjahr}',ZoneNumber='${lZone}')`;
+			oData.setDeferredGroups(["group1"]);
 			oData.remove(sPath, {
 				groupId: "group1",
 				success: function (oData) {
@@ -1903,6 +1947,7 @@ sap.ui.define([
 			var lIblnr = rowValue.CANum;
 			var lGjahr = rowValue.ReferencedPIDocs.split("-")[1];
 			var sPath = `/Escaneados(iblnr='${lIblnr}',gjahr='${lGjahr}',matnr='${productNumber}',werks='${rowValue.StorageLocationID}',zone_number='${rowValue.ZoneNumber.replaceAll(" ", "%20")}')`;
+			oData.setDeferredGroups(["group1"]);
 			oData.remove(sPath, {
 				groupId: "group1",
 				success: function (oData) {
@@ -1958,12 +2003,12 @@ sap.ui.define([
 			if (oEvent.mParameters.reason === 'Growing' && indexItem > -1 && o.CAType === '1') {
 				this.manageInputsOnRecount(oTable);
 			};
-			if (oEvent.mParameters.reason === 'Filter' && o.CAType === '1') {
+			if ((oEvent.mParameters.reason === 'Filter' || oEvent.mParameters.reason === 'Change') && o.CAType === '1') {
 				var activeIndex = oTable.getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
 				if (activeIndex === -1) {
 					activeIndex = 0;
 					var oItem = oTable.getItems()[activeIndex];
-					this.enableDisableItems(oItem, true);		
+					this.enableDisableItems(oItem, true);
 				};
 
 			};
@@ -2056,6 +2101,26 @@ sap.ui.define([
 			});
 		},
 
+		getValidacionEscaneadosRecuento: function (o) {
+			var t = this;
+			var sServiceUrl = "/sap/opu/odata/sap/ZGW_F1512_EXTENDED_SRV";
+			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl, false);
+			var zoneNumber = 'SAP_STD_ZONE';
+			var sPath = `/ValidaEscaneadosSet(CANum='${o.CANum}',CAType='${o.CAType}',StorageLocationID='${o.StorageLocationID}',ZoneNumber='${zoneNumber.replaceAll(" ", "%20")}',SiteID='${o.SiteID}')`;
+			oData.read(sPath, {
+				success: function (oData) {
+					if (oData.EscaneadoTotalmente === true) {
+						t._submitCADetailCustom(true);
+					}
+					else {
+						t._utilities.showErrorMessageBox("No se puede enviar el recuento, existen productos que no han sido escaneados.");
+					};
+				},
+				error: function (oError) {
+					debugger;
+				}
+			});
+		},
 		isProductLineItemQtyInputEnabledCustom: function (sCAStatus, sCALineNum, aCALineItems) {
 			if (sCAStatus === "1") {
 				return this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
