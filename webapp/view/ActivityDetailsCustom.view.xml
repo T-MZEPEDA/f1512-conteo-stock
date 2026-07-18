@@ -150,7 +150,7 @@
                         <cells>
                             <VBox id="PRODUCT_INFO_COL_VL">
                                 <ObjectIdentifier
-                                    id="PRODUCT_INFO_COL_OI"
+                                    id="PRODUCT_INFO_COL_OI"                                                                        
                                     title="{CALineItems>ProductDesc}"
                                     titlePress="onProductTitlePress"
                                     titleActive="{parts:[{path:''}], formatter:'._formatter.isProductDescriptionLinkEnabled'}"

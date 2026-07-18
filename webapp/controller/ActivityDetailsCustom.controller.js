@@ -31,6 +31,7 @@ sap.ui.define([
 	var superIndex = 0;
 	var indexItem = -1; // Se usa para determinar el index del item que se va a seleccionar en la tabla de Line Items, después de hacer un escaneo de EAN
 	var tipoEan = ""; // Se usa para determinar si el EAN es de tipo caja o pieza, para hacer focus en el input correspondiente
+	var noEscaneados = [];
 	return sap.ui.controller("customer.app.variant.f1512.controller.ActivityDetailsCustom", {
 		//    _jSONModel: J,
 		//    _device: D,
@@ -312,6 +313,7 @@ sap.ui.define([
 				};
 				t.setCounters_v2(t);
 				// VMTC: Código Custom - Se agrega para habilitar de forma automática el teclado numérico en la Hand Held, no funciona del todo bien en versión de Escritorio
+				t.enableDisableItems(t.byId("CA_LINE_ITEMS_TABLE").getItems()[0], true);
 				setTimeout(() => {
 					if (tipoEan === 'P') {
 						t.byId("CA_LINE_ITEMS_TABLE").getItems()[0].getCells()[1].getItems()[3].getItems()[0].getItems()[0].setValue("");
@@ -1425,30 +1427,40 @@ sap.ui.define([
 			var o = this.getView().getModel("CAHeader").getData();
 			if (o.CAType === '1') {
 				var activeIndex = oTable.getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
-				var oItem = oTable.getItems()[activeIndex];
-				var valueQty = oItem.getCells()[1].getItems()[0].getValue();
+				var oItem = undefined;
+				if (activeIndex >= 0) {
+					oItem = oTable.getItems()[activeIndex];
+					var valueQty = oItem.getCells()[1].getItems()[0].getValue();
+				};
 			};
 
 			switch (oEvent.getSource().getSelectedKey()) {
 				case '1': // Todos los registros
-					if (o.CAType === '1') {
+					if (o.CAType === '1' && oItem) {
 						this.enableDisableItems(oItem, false);
 					};
 					oFilter = null;
 					break;
 				case '2': // Contados
-					if (o.CAType === '1' && Number(valueQty) === 0) {
+					if (o.CAType === '1' && Number(valueQty) === 0 && oItem) {
 						this.enableDisableItems(oItem, false);
 					};
 					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.GT, 0));
 					break;
 				case '3': // No contados
-					if (o.CAType === '1' && Number(valueQty) > 0) {
+					if (o.CAType === '1' && Number(valueQty) > 0 && oItem) {
 						oItem.getCells()[1].getItems()[0].setEnabled(false);
 						oItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0].setEnabled(false);
 						oItem.getCells()[1].getItems()[3].getItems()[1].getItems()[0].setEnabled(false);
 					};
 					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.EQ, 0));
+					break;
+				case '4': // No escaneados
+					if (noEscaneados.length === 0) {
+						oFilter.push(new sap.ui.model.Filter("CALineNum", sap.ui.model.FilterOperator.EQ, 999999));
+					} else {
+						oFilter = noEscaneados;
+					}
 					break;
 				default:
 					break;
@@ -1488,7 +1500,7 @@ sap.ui.define([
 			if (o.CAType === '1') {
 				activeIndex = oView.byId("CA_LINE_ITEMS_TABLE").getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
 			} else { activeIndex = 0; };
-			if (activeIndex > 0) {
+			if (activeIndex >= 0) {
 				var addSource = oView.byId("CA_LINE_ITEMS_TABLE").getItems()[activeIndex].getCells()[1].getItems()[3];
 				var result = this.addValueToTotalQty(addSource, this);
 			};
@@ -1628,6 +1640,7 @@ sap.ui.define([
 				this.enableDisableItems(activeItem, false);
 			};
 			var oItem = tableItems[indexItem];
+			noEscaneados = noEscaneados.filter(item => item.getValue1() != this.getView().getModel("CALineItems").getObject(oItem.getBindingContext("CALineItems").getPath()).CALineNum); // Eliminar del array los registros que ya han sido escaneados
 			iTable.setSelectedItem(oItem, true);
 			iTable.scrollToIndex(indexItem);
 			this.enableDisableItems(oItem, true);
@@ -2000,17 +2013,29 @@ sap.ui.define([
 		onTableUpdateFinished: function (oEvent) {
 			var o = this.getView().getModel("CAHeader").getData();
 			var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
+			var comboFilter = this.getView().byId("ComboFilter");
 			if (oEvent.mParameters.reason === 'Growing' && indexItem > -1 && o.CAType === '1') {
 				this.manageInputsOnRecount(oTable);
 			};
-			if ((oEvent.mParameters.reason === 'Filter' || oEvent.mParameters.reason === 'Change') && o.CAType === '1') {
-				var activeIndex = oTable.getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
-				if (activeIndex === -1) {
-					activeIndex = 0;
-					var oItem = oTable.getItems()[activeIndex];
-					this.enableDisableItems(oItem, true);
+			// if ((oEvent.mParameters.reason === 'Filter' || oEvent.mParameters.reason === 'Change') && o.CAType === '1') {
+			if (oEvent.mParameters.reason === 'Change' && o.CAType === '1') {
+				// Agregar opción de No escaneados, para el filtro				
+				if (!comboFilter.getItemByKey("4")) {
+					comboFilter.addItem(new sap.ui.core.Item({ key: "4", text: "No escaneados" }))
+					this.getNoEscaneados(o.CANum);
 				};
-
+				if (oTable.getItems().length > 0) {
+					var activeIndex = oTable.getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
+					if (activeIndex === -1) {
+						activeIndex = 0;
+						var oItem = oTable.getItems()[activeIndex];
+						this.enableDisableItems(oItem, true);
+					};
+				}
+			} else {
+				if (comboFilter.getItemByKey("4") && o.CAType !== '1') {
+					comboFilter.removeItem(comboFilter.getItemByKey("4"));
+				};
 			};
 		},
 		createCountingActivityDetailAndLineItemsCustom: function (o, f, e, iSort) {
@@ -2134,11 +2159,11 @@ sap.ui.define([
 			// Count by Zone      
 			if (sCountByZoneFlag === "X") {
 				// CA line item is the first one
-				bIsVisibleCountInputField = this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
-				return bIsVisibleCountInputField;
+				// bIsVisibleCountInputField = this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
+				return !bIsVisibleCountInputField;
 			} else if (aCALineItems[0].CAType === "1") {
-				bIsVisibleCountInputField = this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
-				return bIsVisibleCountInputField;
+				// bIsVisibleCountInputField = this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
+				return !bIsVisibleCountInputField;
 			}
 			else {
 				// Count by Product
@@ -2151,15 +2176,16 @@ sap.ui.define([
 			// Count by Product
 			if (sCountByZoneFlag === "") {
 				if (aCALineItems[0].CAType === "1") {
-					return !this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
+					// return !this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
+					return !bIsVisibleCountTextField;
 				} else {
 					return bIsVisibleCountTextField;
 				}
 				// Count by Zone      
 			} else if (sCountByZoneFlag === "X") {
 				// CA line item is not the first one
-				bIsVisibleCountTextField = !this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
-				return bIsVisibleCountTextField;
+				// bIsVisibleCountTextField = !this._formatter.isFirstLineItem(sCALineNum, aCALineItems);
+				return !bIsVisibleCountTextField;
 			}
 		},
 		formatCountQtyCustom: function (sCountQty, aCALineItems) {
@@ -2168,6 +2194,40 @@ sap.ui.define([
 			} else {
 				return sCountQty;
 			};
+		},
+		getNoEscaneados: function (iCANum) {
+			var sServiceUrl = "/sap/opu/odata/sap/ZGW_F1512_EXTENDED_SRV";
+			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl);
+			var oFilters = [];
+			oFilters.push(new sap.ui.model.Filter(
+				"CANum",
+				sap.ui.model.FilterOperator.EQ,
+				iCANum
+			))
+			oData.read("/NoEscaneadosSet", {
+				filters: oFilters,
+				success: function (oSuccess) {
+					oSuccess.results.forEach(item => {
+						noEscaneados.push(new sap.ui.model.Filter("CALineNum", sap.ui.model.FilterOperator.EQ, item.CALineNum))
+					});
+					// t.createCountingActivityDetailAndLineItemsCustom(o, s, E, oSuccess.results);
+					// var sortOrder = oSuccess.results[0].SortOrder;
+					// return sortOrder;
+
+				},
+				error: function (oError) {
+					reject(oError);
+				}
+			});
+			oData.submitChanges({
+				groupId: "group1",
+				success: function (oData) {
+					let v_x = "x";
+				},
+				error: function (oError) {
+
+				}
+			});
 		},
 		// ---------------------------------------------------------------------------------------------
 	});
