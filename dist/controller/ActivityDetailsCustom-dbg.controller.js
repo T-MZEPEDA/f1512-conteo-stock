@@ -654,7 +654,29 @@ sap.ui.define([
 			var l = E.getSource().getParent().getParent();
 			var s = l.getBindingContext("CALineItems").getPath();
 			var b = a.getObject(s);
-			//----------- Suma Custom ------------			
+			//----------- Suma Custom ------------		
+			var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
+			var oH = this.getView().getModel("CAHeader").getData();
+			var oItem = undefined;
+			var objPza = "";
+			var objCaja = "";
+			if (oH.CAType === '1') {
+				var activeIndex = oTable.getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
+				if (activeIndex >= 0) {
+					oItem = oTable.getItems()[activeIndex];
+					// objPza = oItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0];
+					// objCaja = oItem.getCells()[1].getItems()[3].getItems()[1].getItems()[0];
+				};
+			} else {
+				oItem = oTable.getItems()[0];
+				// 	  objPza = oItem.getItems()[0].getItems()[0];
+				// objCaja = oItem.getItems()[1].getItems()[0];
+			};
+			objPza = oItem.getCells()[1].getItems()[3].getItems()[0].getItems()[0];
+			objCaja = oItem.getCells()[1].getItems()[3].getItems()[1].getItems()[0];
+			objCaja.setValue("");
+			objPza.setValue("");
+			// -----------------------------------
 			if (E.getParameter("value") !== E.getSource()._lastValue) {
 				var v_Aux = Number(E.getParameter("value"));
 			} else {
@@ -892,7 +914,7 @@ sap.ui.define([
 					actions: [t._messageBox.Action.OK, t._messageBox.Action.CANCEL],
 					onClose: function (sAction) {
 						if (sAction === "OK") {
-							debugger;
+							// debugger;
 							var o = t.getView().getModel("CAHeader").getData();
 							if (o.CAType === '1') {
 								t.getValidacionEscaneadosRecuento(o);
@@ -1077,7 +1099,6 @@ sap.ui.define([
 					},
 					filters: this.getFiltersCAProducts(o),
 					success: function (oSuccess) {
-						debugger;
 						var itemsArray = [];
 						var resultsLength = oSuccess.results.length;
 						oSuccess.results.forEach((producto, index) => {
@@ -1123,7 +1144,7 @@ sap.ui.define([
 						});
 					},
 					error: function (oError) {
-						debugger;
+						// debugger;
 					}
 				}
 
@@ -1184,7 +1205,7 @@ sap.ui.define([
 					oThis._oBusyIndicator.open();
 				},
 				error: function (oError) {
-					debugger;
+					// debugger;
 				}
 			});
 		},
@@ -1269,6 +1290,9 @@ sap.ui.define([
 									// let openDialog = function (ok) {
 									// 	oThis.openDialogBarcodeScannerOnError(oThis);
 									// };
+									var oDialog = oThis.byId("InputBarcodeScanDialog");
+									oDialog.close();
+									oThis.byId("BARCODE_SCAN_BUTTON").setEnabled(false);
 									oThis._utilities.showErrorMessageBox("No se ha definido la unidad de medida 'CAJA' para este producto");
 									return;
 								};
@@ -1455,20 +1479,20 @@ sap.ui.define([
 					};
 					oFilter.push(new sap.ui.model.Filter("CountQty", sap.ui.model.FilterOperator.EQ, 0));
 					break;
-				case '4': // No escaneados
-					if (noEscaneados.length === 0) {
-						oFilter.push(new sap.ui.model.Filter("CALineNum", sap.ui.model.FilterOperator.EQ, 999999));
-					} else {
-						oFilter = noEscaneados;
-					}
-					break;
+				// case '4': // No escaneados
+				// 	if (noEscaneados.length === 0) {
+				// 		oFilter.push(new sap.ui.model.Filter("CALineNum", sap.ui.model.FilterOperator.EQ, 999999));
+				// 	} else {
+				// 		oFilter = noEscaneados;
+				// 	}
+				// 	break;
 				default:
 					break;
 			}
 			oTable.getBinding("items").filter(oFilter);
 		},
 		onScanSuccess: function (oEvent) {
-			debugger;
+			// debugger;
 			oldValue = 0;
 			scanGTIN = oEvent.getParameter("text");
 			if (Number(scanGTIN) === 0) {
@@ -1535,8 +1559,11 @@ sap.ui.define([
 					oDialog.getContent()[0].attachLiveChange(this.onScanLiveupdate, this);
 				}
 			}
-			oDialog.getContent()[0].setValue(""); // Limpiar el campo de input cada vez que se abre el diálogo			
-			oDialog.open();
+			if (result !== 'CAJA') {
+				oDialog.getContent()[0].setValue(""); // Limpiar el campo de input cada vez que se abre el diálogo			
+				oDialog.open();
+			}
+
 		},
 		onCancelScanInput: function (oEvent) {
 			var oDialog = this.getView().byId("InputBarcodeScanDialog");
@@ -1879,11 +1906,13 @@ sap.ui.define([
 				return "Error";
 			};
 
-			objCaja.setValue("");
-			objPza.setValue("");
+			// objCaja.setValue("");
+			// objPza.setValue("");
 			lvActual = Number(data.CountQty);
 
 			if (lvCaja === "") {
+				objCaja.setValue("");
+				objPza.setValue("");
 				if (Number(lvPza) > 0) {
 					var SumaTotal = Number(lvPza) + Number(lvActual);
 					objQTY.fireChange({ value: `${SumaTotal}` });
@@ -2014,16 +2043,19 @@ sap.ui.define([
 			var o = this.getView().getModel("CAHeader").getData();
 			var oTable = this.getView().byId("CA_LINE_ITEMS_TABLE");
 			var comboFilter = this.getView().byId("ComboFilter");
+			var BSB = this.byId("BARCODE_SCAN_BUTTON");
+			BSB.setEnabled(true);
+			comboFilter.revertSelection();
 			if (oEvent.mParameters.reason === 'Growing' && indexItem > -1 && o.CAType === '1') {
 				this.manageInputsOnRecount(oTable);
 			};
 			// if ((oEvent.mParameters.reason === 'Filter' || oEvent.mParameters.reason === 'Change') && o.CAType === '1') {
 			if (oEvent.mParameters.reason === 'Change' && o.CAType === '1') {
 				// Agregar opción de No escaneados, para el filtro				
-				if (!comboFilter.getItemByKey("4")) {
-					comboFilter.addItem(new sap.ui.core.Item({ key: "4", text: "No escaneados" }))
-					this.getNoEscaneados(o.CANum);
-				};
+				// if (!comboFilter.getItemByKey("4")) {
+				// 	comboFilter.addItem(new sap.ui.core.Item({ key: "4", text: "No escaneados" }))
+				// 	this.getNoEscaneados(o.CANum);
+				// };
 				if (oTable.getItems().length > 0) {
 					var activeIndex = oTable.getItems().findIndex(item => item.getCells()[1].getItems()[3].getItems()[0].getItems()[0].getEnabled() === true);
 					if (activeIndex === -1) {
@@ -2033,9 +2065,9 @@ sap.ui.define([
 					};
 				}
 			} else {
-				if (comboFilter.getItemByKey("4") && o.CAType !== '1') {
-					comboFilter.removeItem(comboFilter.getItemByKey("4"));
-				};
+				// if (comboFilter.getItemByKey("4") && o.CAType !== '1') {
+				// 	comboFilter.removeItem(comboFilter.getItemByKey("4"));
+				// };
 			};
 		},
 		createCountingActivityDetailAndLineItemsCustom: function (o, f, e, iSort) {
@@ -2142,7 +2174,7 @@ sap.ui.define([
 					};
 				},
 				error: function (oError) {
-					debugger;
+					// debugger;
 				}
 			});
 		},
@@ -2228,6 +2260,13 @@ sap.ui.define([
 
 				}
 			});
+		},
+		onQuantityCajaLiveChange: function (params) {
+			var BSB = this.byId("BARCODE_SCAN_BUTTON");
+			if (!BSB.getEnabled()) {
+				BSB.setEnabled(true);
+			};
+
 		},
 		// ---------------------------------------------------------------------------------------------
 	});
