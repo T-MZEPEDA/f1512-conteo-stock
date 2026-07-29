@@ -103,7 +103,7 @@
                 mode="{parts:[{path: 'CADetails>/CountByZone'}],formatter:'._formatter.formatCALineItemsTableDeletionMode'}"
                 items="{path:'CALineItems>/'}"
                 growing="true"
-                growingThreshold="10"      
+                growingThreshold="10"                      
                 updateFinished="onTableUpdateFinished"
                 sticky="ColumnHeaders,HeaderToolbar,InfoToolbar"
             >
