@@ -1967,7 +1967,7 @@ sap.ui.define([
 				"iblnr": rowValue.CANum,
 				"gjahr": rowValue.ReferencedPIDocs.split("-")[1],
 				"matnr": productNumber,
-				"werks": rowValue.StorageLocationID,
+				"werks": rowValue.SiteID,
 				"zone_number": rowValue.ZoneNumber,
 			};
 			oData.create("/Escaneados", nModel, mParameters)
@@ -2015,7 +2015,7 @@ sap.ui.define([
 			var oData = new sap.ui.model.odata.v2.ODataModel(sServiceUrl);
 			var lIblnr = rowValue.CANum;
 			var lGjahr = rowValue.ReferencedPIDocs.split("-")[1];
-			var sPath = `/Escaneados(iblnr='${lIblnr}',gjahr='${lGjahr}',matnr='${productNumber}',werks='${rowValue.StorageLocationID}',zone_number='${rowValue.ZoneNumber.replaceAll(" ", "%20")}')`;
+			var sPath = `/Escaneados(iblnr='${lIblnr}',gjahr='${lGjahr}',matnr='${productNumber}',werks='${rowValue.SiteID}',zone_number='${rowValue.ZoneNumber.replaceAll(" ", "%20")}')`;
 			oData.setDeferredGroups(["group1"]);
 			oData.remove(sPath, {
 				groupId: "group1",
