@@ -1651,8 +1651,8 @@ sap.ui.define([
 				var aData = oTable.getBinding("items").oList;
 				indexItem = aData.findIndex(row => row.GTIN === iGTIN);
 				if (oTable.getBinding("items").getFilterInfo() !== null) {
-					oTable.getBinding("items").filter(null);	
-				};				
+					oTable.getBinding("items").filter(null);
+				};
 
 				// En caso de que no exista el EAN en la lista de productos se valida que no sea un EAN de Caja. Si es diferente de pieza se hace una conversión de EAN de caja a EAN de Pieza
 				if (indexItem === -1) {
@@ -1695,7 +1695,7 @@ sap.ui.define([
 			var oItem = tableItems[indexItem];
 			noEscaneados = noEscaneados.filter(item => item.getValue1() != this.getView().getModel("CALineItems").getObject(oItem.getBindingContext("CALineItems").getPath()).CALineNum); // Eliminar del array los registros que ya han sido escaneados
 			iTable.setSelectedItem(oItem, true);
-			iTable.scrollToIndex(indexItem);			
+			iTable.scrollToIndex(indexItem);
 			this.enableDisableItems(oItem, true);
 			this._oBusyIndicator.close();
 			setTimeout(() => {
@@ -2223,7 +2223,7 @@ sap.ui.define([
 			var bIsVisibleCountInputField = true;
 
 			// Count by Zone      
-			if (sCountByZoneFlag === "X") {				
+			if (sCountByZoneFlag === "X") {
 				return !bIsVisibleCountInputField;
 			} else if (aCALineItems[0].CAType === "1") {
 				return !bIsVisibleCountInputField;
@@ -2285,13 +2285,44 @@ sap.ui.define([
 				}
 			});
 		},
+		/*
 		onQuantityCajaLiveChange: function (params) {
 			var BSB = this.byId("BARCODE_SCAN_BUTTON");
 			if (!BSB.getEnabled()) {
 				BSB.setEnabled(true);
 			};
 
-		}		
+		}	
+		*/
+		
+		onQuantityCajaLiveChange: function (params) {
+			var BSB = this.byId("BARCODE_SCAN_BUTTON");
+			if (!BSB.getEnabled()) {
+				BSB.setEnabled(true);
+			};
+
+
+
+			var sValue = params.getParameter("value");
+			var iValue = parseInt(sValue || "0", 10);
+
+			if (iValue > 999) {
+				params.getSource().setValue("999");
+			};
+		},
+		
+
+		
+
+		onQuantityPzaLiveChange: function (params) {
+			var sValue = params.getParameter("value");
+			var iValue = parseInt(sValue || "0", 10);
+
+			if (iValue > 999) {
+				params.getSource().setValue("999");
+			};
+		},
+
 		// ---------------------------------------------------------------------------------------------
 	});
 });
