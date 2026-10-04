@@ -59,13 +59,14 @@
                     />
                 </attributes>
             </ObjectHeader>
-            <Panel>                
-                <ComboBox   id="ComboFilter"                            
-                            selectionChange="_onComboBoxSelectionChange"
-                            >
+            <Panel>
+                <ComboBox
+                    id="ComboFilter"
+                    selectionChange="_onComboBoxSelectionChange"
+                >
                     <core:Item
                         key="1"
-                        text="Todas las posiciones"                                                
+                        text="Todas las posiciones"
                     />
                     <core:Item
                         key="2"
@@ -103,18 +104,19 @@
                 mode="{parts:[{path: 'CADetails>/CountByZone'}],formatter:'._formatter.formatCALineItemsTableDeletionMode'}"
                 items="{path:'CALineItems>/'}"
                 growing="true"
-                growingThreshold="10"                      
+                growingThreshold="10"
                 updateFinished="onTableUpdateFinished"
                 sticky="ColumnHeaders,HeaderToolbar,InfoToolbar"
             >
-            <headerToolbar>
-                <OverflowToolbar >
-                    <content>
-                    <Button 
-                        id="BARCODE_SCAN_BUTTON"
-                        icon="sap-icon://bar-code"
-                        press="onBarcodeDialogPress"/>
-                    <!-- <ndc:BarcodeScannerButton
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <content>
+                            <Button
+                                id="BARCODE_SCAN_BUTTON"
+                                icon="sap-icon://bar-code"
+                                press="onBarcodeDialogPress"
+                            />
+                            <!-- <ndc:BarcodeScannerButton
                         id="sampleBarcodeScannerButton"    
                         provideFallback="false"                                             
                         scanSuccess="onScanSuccess"                                                                                       
@@ -123,17 +125,17 @@
                         dialogTitle="Escanear producto"
                         visible="true"                        
                     /> -->
-                    <Label
-                        id="ITEMS_COUNTED_LB"
-                        design="Bold"
-                        text="{parts:[{path:'CADetails>/TotalCountedItems'}],formatter:'._formatter.formatTotalItemsCountedLabel'}"
-                    />
-                    <!-- <Button id="testButton"
+                            <Label
+                                id="ITEMS_COUNTED_LB"
+                                design="Bold"
+                                text="{parts:[{path:'CADetails>/TotalCountedItems'}],formatter:'._formatter.formatTotalItemsCountedLabel'}"
+                            />
+                            <!-- <Button id="testButton"
                             text="Test de Navegacion"
                             press="_onTestButtonPress"/> -->
-                </content>
-                </OverflowToolbar>
-            </headerToolbar>
+                        </content>
+                    </OverflowToolbar>
+                </headerToolbar>
                 <columns>
                     <Column id="PRODUCT_INFO_COL" />
                     <Column
@@ -150,7 +152,7 @@
                         <cells>
                             <VBox id="PRODUCT_INFO_COL_VL">
                                 <ObjectIdentifier
-                                    id="PRODUCT_INFO_COL_OI"                                                                        
+                                    id="PRODUCT_INFO_COL_OI"
                                     title="{CALineItems>ProductDesc}"
                                     titlePress="onProductTitlePress"
                                     titleActive="{parts:[{path:''}], formatter:'._formatter.isProductDescriptionLinkEnabled'}"
@@ -183,12 +185,14 @@
                                 />
                                 <Text
                                     id="BASE_UOM_TXT"
-                                    text = "{parts:[{path: 'CADetails>/CAType'},{path: 'CALineItems>CountUoM'}],formatter:'.formatTextBaseUOM'}"                                    
+                                    text="{parts:[{path: 'CADetails>/CAType'},{path: 'CALineItems>CountUoM'}],formatter:'.formatTextBaseUOM'}"
                                 />
 
                                 <!-- INICIO -->
-                                <HBox  id="inputBoxes"
-                                       justifyContent="SpaceAround">
+                                <HBox
+                                    id="inputBoxes"
+                                    justifyContent="SpaceAround"
+                                >
                                     <!-- Código Custom: Se agrega input box de PZA - Inicio -->
                                     <VBox
                                         id="PZA_COL_VL"
@@ -197,8 +201,10 @@
                                         <Input
                                             id="PZA_INPUT"
                                             value=""
-                                            type="Number"                                            
+                                            type="Number"
+                                            maxLength="3"
                                             submit="_onQuantitySubmit"
+                                            liveChange=".onQuantityPzaLiveChange"
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'.isVisibleCountInputFieldCustom'}"
                                             enabled="{parts:[{path:'CAHeader>/InStoreStatus'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}], formatter:'.isProductLineItemQtyInputEnabledCustom'}"
                                             width="3.5rem"
@@ -215,14 +221,18 @@
                                     </VBox>
                                     <!-- Código Custom: Se agrega input box de PZA - Fin -->
                                     <!-- Código Custom: Se agrega input box de Caja - Inicio -->
-                                    <VBox id="CAJA_COL_VL" 
-                                          class="sapUiTinyMarginEnd">
+
+                                    <!-- 
+                                    <VBox
+                                        id="CAJA_COL_VL"
+                                        class="sapUiTinyMarginEnd"
+                                    >
                                         <Input
                                             id="CAJA_INPUT"
                                             value=""
                                             type="Number"
-                                            submit="_onQuantitySubmit"          
-                                            liveChange=".onQuantityCajaLiveChange"                                  
+                                            submit="_onQuantitySubmit"
+                                            liveChange=".onQuantityCajaLiveChange"
                                             visible="{parts:[{path: 'CADetails>/CountByZone'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}],formatter:'.isVisibleCountInputFieldCustom'}"
                                             enabled="{parts:[{path:'CAHeader>/InStoreStatus'},{path: 'CALineItems>CALineNum'},{path: 'CALineItems>/'}], formatter:'.isProductLineItemQtyInputEnabledCustom'}"
                                             width="3.5rem"
@@ -237,7 +247,37 @@
                                             text="CJ"
                                         />
                                     </VBox>
+                                    -->
+                                    <VBox
+                                        id="CAJA_COL_VL"
+                                        class="sapUiTinyMarginEnd"
+                                    >
+                                        <Input
+                                            id="CAJA_INPUT"
+                                            value=""
+                                            type="Number"
+                                            maxLength="3"
+                                            submit="_onQuantitySubmit"
+                                            liveChange=".onQuantityCajaLiveChange"
+                                            visible="{parts:[{path:'CADetails>/CountByZone'},{path:'CALineItems>CALineNum'},{path:'CALineItems>/'}],formatter:'.isVisibleCountInputFieldCustom'}"
+                                            enabled="{parts:[{path:'CAHeader>/InStoreStatus'},{path:'CALineItems>CALineNum'},{path:'CALineItems>/'}],formatter:'.isProductLineItemQtyInputEnabledCustom'}"
+                                            width="3.5rem"
+                                        />
+
+                                        <Text
+                                            id="CAJA_TXT"
+                                            text="0"
+                                            visible="{parts:[{path:'CADetails>/CountByZone'},{path:'CALineItems>CALineNum'},{path:'CALineItems>/'}],formatter:'.isVisibleCountTextFieldCustom'}"
+                                        />
+
+                                        <Text
+                                            id="CAJA_UOM_TXT"
+                                            text="CJ"
+                                        />
+                                    </VBox>
+                                    
                                 </HBox>
+
                                 <!-- Código Custom: Se agrega input box de Caja - Fin -->
                                 <!-- FIN -->
                             </VBox>
